@@ -12,11 +12,16 @@ function delay(time) {
     const page = await browser.newPage();
 
     // Navigate the page to a URL
-    await page.goto('http://127.0.0.1:5500/test.html');
+    await page.goto('http://127.0.0.1:8080/test.html');
 
     await page.waitForSelector("#done");
-    const element = await page.waitForSelector('img');
-    console.log(element);
+
+    let content = await page.evaluate(() => {
+        let divs = [...document.querySelectorAll('div')];
+        return divs.map((div) => div.id);
+    });
+
+    console.log(content);
 
     await browser.close();
 })();

@@ -181,3 +181,59 @@ impl Renderer for XpdfRenderer {
         "xpdf".to_string()
     }
 }
+
+pub struct QuartzRenderer {}
+
+impl QuartzRenderer {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl Renderer for QuartzRenderer {
+    fn render(&self, buf: &[u8], options: &RenderOptions) -> Result<Vec<RenderedPage>, String> {
+        let dir = TempDir::new("quartz").unwrap();
+        let input_path = dir.path().join("file.pdf");
+        let mut input_file = File::create(&input_path).unwrap();
+        input_file.write(buf).unwrap();
+
+        // Needed so that trailing slash is added
+        let mut dir_path = PathBuf::from(dir.path());
+        dir_path.push("");
+
+        let out = Command::new("quartz_pdf")
+            .arg(&input_path)
+            .arg(&dir_path)
+            .arg(options.scale.to_string())
+            .output()
+            .unwrap();
+
+        let mut out_files: Vec<(i32, PathBuf)> = fs::read_dir(dir.path())
+            .map_err(|_| "")?
+            .filter_map(|entry| entry.ok())
+            .map(|entry| entry.path())
+            .filter_map(|path| {
+                path.file_name()
+                    .and_then(|name| name.to_str())
+                    .and_then(|name| {
+                        let captures = regex::Regex::new(r"(?m)-(\d+).png")
+                            .unwrap()
+                            .captures(name)?;
+                        let num_str = captures.get(1)?;
+                        let num: i32 = num_str.as_str().parse().ok()?;
+                        Some((num, path.clone()))
+                    })
+            })
+            .collect::<Vec<_>>();
+
+        out_files.sort_by_key(|e| e.0);
+
+        let out_files = out_files.iter().map(|e| fs::read(&e.1).unwrap()).collect();
+
+        Ok(out_files)
+    }
+
+    fn name(&self) -> String {
+        "quartz".to_string()
+    }
+}

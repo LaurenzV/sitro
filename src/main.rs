@@ -1,23 +1,32 @@
-use crate::renderer::{MupdfRenderer, RenderOptions, Renderer, PdfiumRenderer, XpdfRenderer};
+use std::path::{Path, PathBuf};
+use crate::renderer::{MupdfRenderer, PdfiumRenderer, RenderOptions, Renderer, XpdfRenderer, QuartzRenderer};
 
 mod renderer;
 
 fn main() {
-    let file = std::fs::read("clip.pdf").unwrap();
+    let file = std::fs::read("gradient-relative-linear.pdf").unwrap();
 
-    let renderers: Vec<Box<dyn Renderer>> = vec![Box::from(MupdfRenderer::new()),
-                                                 Box::from(PdfiumRenderer::new()),
-    Box::from(XpdfRenderer::new())
+    let _ = std::fs::remove_dir_all("out");
+
+    let renderers: Vec<Box<dyn Renderer>> = vec![
+        Box::from(MupdfRenderer::new()),
+        Box::from(PdfiumRenderer::new()),
+        Box::from(XpdfRenderer::new()),
+        Box::from(QuartzRenderer::new())
     ];
 
     for renderer in renderers {
         let result = renderer
-            .render(&file, &RenderOptions { scale: 10.0 })
+            .render(&file, &RenderOptions { scale: 15.0 })
             .unwrap();
 
         for (page, res) in result.iter().enumerate() {
-            std::fs::write(format!("out/{}/res-{}.png", renderer.name(), page), res).unwrap();
+            let mut dir = PathBuf::from("out");
+            dir.push(renderer.name());
+            let mut path = dir.clone();
+            path.push(format!("res-{}.png", page));
+            let _ = std::fs::create_dir_all(dir);
+            std::fs::write(path, res).unwrap();
         }
     }
-
 }

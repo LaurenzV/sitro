@@ -6,13 +6,21 @@
 
 int main(int argc, const char * argv[]) {
     @autoreleasepool {
-        if (argc != 3) {
-            NSLog(@"Usage: PDFToPNG <path to PDF file> <scale factor>");
+        if (argc != 4) {
+            NSLog(@"Usage: PDFToPNG <path to PDF file> <output root directory> <scale factor>");
             return 1;
         }
 
         NSString *pdfPath = [NSString stringWithUTF8String:argv[1]];
-        float scaleFactor = atof(argv[2]);
+        NSString *outputRoot = [NSString stringWithUTF8String:argv[2]];  // Root directory for output images
+        float scaleFactor = atof(argv[3]);
+
+        // Ensure the output directory exists
+        NSFileManager *fileManager = [NSFileManager defaultManager];
+        if (![fileManager fileExistsAtPath:outputRoot isDirectory:nil]) {
+            NSLog(@"Output directory does not exist.");
+            return 1;
+        }
 
         NSURL *pdfUrl = [NSURL fileURLWithPath:pdfPath];
         CGPDFDocumentRef pdf = CGPDFDocumentCreateWithURL((__bridge CFURLRef) pdfUrl);
@@ -40,7 +48,7 @@ int main(int argc, const char * argv[]) {
                 NSLog(@"Failed to create graphics context.");
                 continue;
             }
-            
+
             CGContextSetRGBFillColor(context, 1.0, 1.0, 1.0, 1.0);
             CGContextFillRect(context, pageRect);
             CGContextScaleCTM(context, scaleFactor, scaleFactor);
@@ -52,9 +60,12 @@ int main(int argc, const char * argv[]) {
                 CGContextRelease(context);
                 continue;
             }
-            
-            NSString *outputPath = [[pdfPath stringByDeletingPathExtension] stringByAppendingFormat:@"-page-%zu.png", pageNum];
+
+            // Construct the output path using the root directory and page number
+            NSString *fileName = [[pdfPath lastPathComponent] stringByDeletingPathExtension];
+            NSString *outputPath = [outputRoot stringByAppendingPathComponent:[NSString stringWithFormat:@"%@-page-%zu.png", fileName, pageNum]];
             CFURLRef url = (__bridge CFURLRef)[[NSURL alloc] initFileURLWithPath:outputPath];
+
             CGImageDestinationRef destination = CGImageDestinationCreateWithURL(url, (__bridge CFStringRef)UTTypePNG.identifier, 1, NULL);
             if (!destination) {
                 NSLog(@"Failed to create image destination.");
@@ -62,12 +73,12 @@ int main(int argc, const char * argv[]) {
                 CGContextRelease(context);
                 continue;
             }
-            
+
             CGImageDestinationAddImage(destination, imageRef, nil);
             if (!CGImageDestinationFinalize(destination)) {
                 NSLog(@"Failed to write image to %@", outputPath);
             } else {
-                NSLog(@"Converted page %zu of %@ to PNG format.", pageNum, pdfPath);
+                NSLog(@"Converted page %zu of %@ to PNG format at %@", pageNum, pdfPath, outputPath);
             }
 
             CGContextRelease(context);
