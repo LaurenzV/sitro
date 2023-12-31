@@ -7,5 +7,6 @@ edition = "2021"
 
 [dependencies]
 image = {version = "0.24.7", features = ["png"]}
-lazy_static = "1.4.0"
 pdfium-render = { version = "0.8.17", features = ["sync"]}
+regex = "1.10.2"
+tempdir = "0.3.7"
