@@ -144,9 +144,6 @@ impl Renderer for XpdfRenderer {
         let mut dir_path = PathBuf::from(dir.path());
         dir_path.push("");
 
-        println!("{:?}", input_path);
-        println!("{:?}", dir_path);
-
         let out = Command::new("pdftopng")
             .arg("-r")
             .arg((72.0 * options.scale).to_string())

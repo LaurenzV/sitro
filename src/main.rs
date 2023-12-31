@@ -3,7 +3,7 @@ use crate::renderer::{MupdfRenderer, RenderOptions, Renderer, PdfiumRenderer, Xp
 mod renderer;
 
 fn main() {
-    let file = std::fs::read("idefix.pdf").unwrap();
+    let file = std::fs::read("clip.pdf").unwrap();
 
     let renderers: Vec<Box<dyn Renderer>> = vec![Box::from(MupdfRenderer::new()),
                                                  Box::from(PdfiumRenderer::new()),
@@ -12,7 +12,7 @@ fn main() {
 
     for renderer in renderers {
         let result = renderer
-            .render(&file, &RenderOptions { scale: 1.0 })
+            .render(&file, &RenderOptions { scale: 10.0 })
             .unwrap();
 
         for (page, res) in result.iter().enumerate() {
