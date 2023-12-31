@@ -1,4 +1,5 @@
 /target
-pdf_reference.pdf
-res.png
 /out
+*.pdf
+*.png
+.idea
