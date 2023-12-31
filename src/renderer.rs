@@ -22,6 +22,8 @@ type RenderedPage = Vec<u8>;
 
 pub trait Renderer {
     fn render(&self, buf: &[u8], options: &RenderOptions) -> Result<Vec<RenderedPage>, String>;
+
+    fn name(&self) -> String;
 }
 
 pub struct PdfiumRenderer {
@@ -61,6 +63,10 @@ impl Renderer for PdfiumRenderer {
         }
 
         Ok(images)
+    }
+
+    fn name(&self) -> String {
+        "pdfium".to_string()
     }
 }
 
@@ -112,5 +118,9 @@ impl Renderer for MupdfRenderer {
         let out_files = out_files.iter().map(|e| fs::read(&e.1).unwrap()).collect();
 
         Ok(out_files)
+    }
+
+    fn name(&self) -> String {
+        "mupdf".to_string()
     }
 }
