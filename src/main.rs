@@ -4,7 +4,7 @@ use crate::renderer::{MupdfRenderer, PdfiumRenderer, RenderOptions, Renderer, Xp
 mod renderer;
 
 fn main() {
-    let file = std::fs::read("gradient-relative-linear.pdf").unwrap();
+    let file = std::fs::read("new.pdf").unwrap();
 
     let _ = std::fs::remove_dir_all("out");
 
@@ -16,8 +16,9 @@ fn main() {
     ];
 
     for renderer in renderers {
+        println!("rendering with {}", renderer.name());
         let result = renderer
-            .render(&file, &RenderOptions { scale: 15.0 })
+            .render(&file, &RenderOptions { scale: 2.0 })
             .unwrap();
 
         for (page, res) in result.iter().enumerate() {
