@@ -1,0 +1,16 @@
+{
+  "name": "pdfjs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "pdf2png.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "canvas": "^2.11.2",
+    "pdfjs-dist": "^4.0.379",
+    "skia-canvas": "^1.0.1"
+  }
+}
