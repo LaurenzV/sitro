@@ -1,12 +1,12 @@
 use std::path::{Path, PathBuf};
+use walkdir::WalkDir;
 use crate::renderer::{MupdfRenderer, PdfiumRenderer, RenderOptions, Renderer, XpdfRenderer, QuartzRenderer, PdfjsRenderer};
 
 mod renderer;
 
 fn main() {
-    let file = std::fs::read("test.pdf").unwrap();
-
     let _ = std::fs::remove_dir_all("out");
+
 
     let renderers: Vec<Box<dyn Renderer>> = vec![
         Box::from(MupdfRenderer::new()),
@@ -16,19 +16,28 @@ fn main() {
         Box::from(PdfjsRenderer::new())
     ];
 
-    for renderer in renderers {
-        println!("rendering with {}", renderer.name());
-        let result = renderer
-            .render(&file, &RenderOptions { scale: 2.0 })
-            .unwrap();
+    let files: Vec<_> = WalkDir::new("pdf").into_iter().filter_map(|e| e.ok())
+        .filter(|e| e.file_type().is_file()).collect();
 
-        for (page, res) in result.iter().enumerate() {
-            let mut dir = PathBuf::from("out");
-            dir.push(renderer.name());
-            let mut path = dir.clone();
-            path.push(format!("res-{}.png", page));
-            let _ = std::fs::create_dir_all(dir);
-            std::fs::write(path, res).unwrap();
+    for entry in files {
+        let pdf_path = entry.path();
+        let file = std::fs::read(pdf_path).unwrap();
+
+        println!("processing {}", pdf_path.to_string_lossy());
+
+        for renderer in &renderers {
+            let result = renderer
+                .render(&file, &RenderOptions { scale: 2.0 })
+                .unwrap();
+
+            for (page, res) in result.iter().enumerate() {
+                let mut dir = PathBuf::from("out");
+                dir.push(pdf_path.with_extension(""));
+                let mut path = dir.clone();
+                path.push(format!("{}-{}.png", page, renderer.name()));
+                let _ = std::fs::create_dir_all(dir);
+                std::fs::write(path, res).unwrap();
+            }
         }
     }
 }

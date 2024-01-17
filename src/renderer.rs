@@ -201,7 +201,7 @@ impl Renderer for QuartzRenderer {
         let mut dir_path = PathBuf::from(dir.path());
         dir_path.push("");
 
-        let out = Command::new("quartz_pdf")
+        let out = Command::new("src/quartz/quartz_pdf")
             .arg(&input_path)
             .arg(&dir_path)
             .arg(options.scale.to_string())
