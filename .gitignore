@@ -1,5 +1,5 @@
 /target
 /out
 *.pdf
-*.png
+#*.png
 .idea
