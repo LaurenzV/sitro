@@ -5,7 +5,7 @@ use crate::renderer::{MupdfRenderer, PdfiumRenderer, RenderOptions, Renderer, Xp
 mod renderer;
 
 fn main() {
-    let _ = std::fs::remove_dir_all("test");
+    // let _ = std::fs::remove_dir_all("test");
 
 
     let renderers: Vec<Box<dyn Renderer>> = vec![
@@ -16,7 +16,7 @@ fn main() {
         Box::from(PdfjsRenderer::new())
     ];
 
-    let root_dir = Path::new("/Users/lstampfl/Programming/GitHub/typst/tests/pdf/meta");
+    let root_dir = Path::new("/Users/lstampfl/Programming/GitHub/typst/tests/pdf/visualize");
 
     let files: Vec<_> = WalkDir::new(root_dir).into_iter().filter_map(|e| e.ok())
         .filter(|e| e.file_type().is_file()).collect();
