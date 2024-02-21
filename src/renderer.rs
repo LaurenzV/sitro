@@ -1,8 +1,6 @@
-use image::ImageFormat;
-use pdfium_render::prelude::{PdfRenderConfig, Pdfium};
 use std::fs;
 use std::fs::File;
-use std::io::{Cursor, Write};
+use std::io::Write;
 use std::path::PathBuf;
 use std::process::Command;
 use tempdir::TempDir;
@@ -28,43 +26,51 @@ pub trait Renderer {
     fn color(&self) -> (u8, u8, u8);
 }
 
-pub struct PdfiumRenderer {
-    instance: Pdfium,
-}
+pub struct PdfiumRenderer {}
 
 impl PdfiumRenderer {
     pub fn new() -> Self {
-        Self {
-            instance: Pdfium::new(
-                Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path("lib/"))
-                    .unwrap(),
-            ),
-        }
+        Self {}
     }
 }
 
 impl Renderer for PdfiumRenderer {
     fn render(&self, buf: &[u8], options: &RenderOptions) -> Result<Vec<RenderedPage>, String> {
-        let document = self
-            .instance
-            .load_pdf_from_byte_slice(buf, None)
-            .map_err(|_| "unable to load pdf document")?;
+        let dir = TempDir::new("pdfium").unwrap();
+        let input_path = dir.path().join("file.pdf");
+        let mut input_file = File::create(&input_path).unwrap();
+        input_file.write(buf).unwrap();
 
-        let mut images = vec![];
+        Command::new("target/release/pdfium")
+            .arg(&input_path)
+            .arg(dir.path().join("out-%d.png"))
+            .arg((options.scale).to_string())
+            .output()
+            .map_err(|_| "failed to run pdfium")?;
 
-        for page in document.pages().iter() {
-            let mut output_buffer = Cursor::new(vec![]);
-            let image = page
-                .render_with_config(&PdfRenderConfig::new().scale_page_by_factor(options.scale))
-                .map_err(|_| "unable to render pdf document")?
-                .as_image();
-            image
-                .write_to(&mut output_buffer, ImageFormat::Png)
-                .map_err(|_| "unable to render pdf document")?;
-            images.push(output_buffer.into_inner());
-        }
+        let mut out_files: Vec<(i32, PathBuf)> = fs::read_dir(dir.path())
+            .map_err(|_| "")?
+            .filter_map(|entry| entry.ok())
+            .map(|entry| entry.path())
+            .filter_map(|path| {
+                path.file_name()
+                    .and_then(|name| name.to_str())
+                    .and_then(|name| {
+                        let captures = regex::Regex::new(r"(?m)out-(\d+).png")
+                            .unwrap()
+                            .captures(name)?;
+                        let num_str = captures.get(1)?;
+                        let num: i32 = num_str.as_str().parse().ok()?;
+                        Some((num, path.clone()))
+                    })
+            })
+            .collect::<Vec<_>>();
 
-        Ok(images)
+        out_files.sort_by_key(|e| e.0);
+
+        let out_files = out_files.iter().map(|e| fs::read(&e.1).unwrap()).collect();
+
+        Ok(out_files)
     }
 
     fn name(&self) -> String {
