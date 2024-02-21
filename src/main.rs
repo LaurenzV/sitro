@@ -1,5 +1,7 @@
 use crate::renderer::{RenderOptions, Renderer};
 use std::path::{Path, PathBuf};
+use rayon::iter::IntoParallelRefIterator;
+use rayon::iter::ParallelIterator;
 use tiny_skia::{Pixmap, PixmapPaint, Transform};
 use walkdir::WalkDir;
 
@@ -24,17 +26,16 @@ fn main() {
         .filter(|e| e.file_type().is_file() && e.file_name().to_string_lossy().ends_with(".pdf"))
         .collect();
 
-    for entry in files {
+    files.par_iter().for_each(|entry| {
         let pdf_path = entry.path();
-        println!("processing {}", pdf_path.to_string_lossy());
         let file = std::fs::read(pdf_path).unwrap();
 
         let rendered_pages = renderers
-            .iter()
+            .par_iter()
             .map(|renderer| {
-                println!("rendering with {}", renderer.name());
+                println!("rendering {} with {}", pdf_path.to_string_lossy(), renderer.name());
                 renderer
-                    .render_as_pixmap(&file, &RenderOptions { scale: 2.5 }, Some(1.0 / 50.0))
+                    .render_as_pixmap(&file, &RenderOptions { scale: 4.0 }, Some(1.0 / 50.0))
                     .unwrap()
             })
             .collect::<Vec<_>>();
@@ -75,5 +76,5 @@ fn main() {
             let _ = std::fs::create_dir_all(dir);
             pixmap.save_png(&path).unwrap();
         }
-    }
+    });
 }
