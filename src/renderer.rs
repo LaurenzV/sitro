@@ -1,9 +1,11 @@
+use std::cmp::min;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use tempdir::TempDir;
+use tiny_skia::{Paint, PathBuilder, Pixmap, PixmapPaint, Stroke, Transform};
 
 #[derive(Copy, Clone)]
 pub struct RenderOptions {
@@ -48,7 +50,74 @@ impl Renderer {
         }
     }
 
-    pub fn render(&self, buf: &[u8], options: &RenderOptions) -> SitroResult {
+    pub fn render_as_pixmap(
+        &self,
+        buf: &[u8],
+        options: &RenderOptions,
+        border_width: Option<f32>,
+    ) -> Result<Vec<Pixmap>, String> {
+        let pages = self.render_as_png(buf, options)?;
+        let Some(border_width) = border_width else {
+            return pages
+                .iter()
+                .map(|page| {
+                    Pixmap::decode_png(page).map_err(|_| "unable to generate pixmap".to_string())
+                })
+                .collect();
+        };
+
+        let mut pixmaps = vec![];
+
+        for page in &pages {
+            let decoded = Pixmap::decode_png(page).unwrap();
+            let width = imagesize::blob_size(&page).unwrap().width as f32;
+            let height = imagesize::blob_size(&page).unwrap().height as f32;
+            let border_width = min(width as u32, height as u32) as f32 * border_width;
+
+            let actual_width = width + border_width;
+            let actual_height = height + border_width;
+
+            let path = {
+                let mut pb = PathBuilder::new();
+                pb.move_to(0.0, 0.0);
+                pb.line_to(width, 0.0);
+                pb.line_to(width, height);
+                pb.line_to(0.0, height);
+                pb.close();
+                pb.finish().unwrap()
+            };
+
+            let mut pixmap = Pixmap::new(actual_width as u32, actual_height as u32).unwrap();
+
+            let mut stroke = Stroke::default();
+            stroke.width = border_width;
+
+            let mut paint = Paint::default();
+            paint.set_color_rgba8(self.color().0, self.color().1, self.color().2, 255);
+
+            pixmap.draw_pixmap(
+                0,
+                0,
+                decoded.as_ref(),
+                &PixmapPaint::default(),
+                Transform::from_translate(border_width, border_width),
+                None,
+            );
+
+            pixmap.stroke_path(
+                &path,
+                &paint,
+                &stroke,
+                Transform::from_translate(border_width / 2.0, border_width / 2.0),
+                None,
+            );
+            pixmaps.push(pixmap);
+        }
+
+        Ok(pixmaps)
+    }
+
+    pub fn render_as_png(&self, buf: &[u8], options: &RenderOptions) -> SitroResult {
         match self {
             Renderer::PdfiumRenderer => self.render_pdfium(buf, options),
             Renderer::MupdfRenderer => self.render_mupdf(buf, options),
