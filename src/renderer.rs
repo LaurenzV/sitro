@@ -215,7 +215,7 @@ impl Renderer for QuartzRenderer {
         let mut dir_path = PathBuf::from(dir.path());
         dir_path.push("");
 
-        let out = Command::new("src/quartz/quartz_pdf")
+        let out = Command::new("src/quartz/quartz_render")
             .arg(&input_path)
             .arg(&dir_path)
             .arg(options.scale.to_string())
@@ -275,9 +275,8 @@ impl Renderer for PdfjsRenderer {
         let mut dir_path = PathBuf::from(dir.path());
         dir_path.push("");
 
-
         let out = Command::new("node")
-            .arg("src/pdfjs/pdfjs_pdf.mjs")
+            .arg("src/pdfjs/pdfjs_render.mjs")
             .arg(&input_path)
             .arg(&dir_path)
             .arg(options.scale.to_string())

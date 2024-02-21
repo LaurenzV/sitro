@@ -1,3 +1,4 @@
+use std::cmp::min;
 use std::path::{Path, PathBuf};
 use tiny_skia::{Paint, PathBuilder, Pixmap, PixmapPaint, Stroke, Transform};
 use walkdir::WalkDir;
@@ -33,11 +34,13 @@ fn main() {
         for renderer in &renderers {
             println!("{}", renderer.name());
             let result = renderer
-                .render(&file, &RenderOptions { scale: 2.0 })
+                .render(&file, &RenderOptions { scale: 4.0 })
                 .unwrap();
 
             rendered_pages.push(result);
         }
+
+        println!("rendering complete image");
 
         for i in 0..rendered_pages[0].len() {
             let max_width = *[
@@ -56,7 +59,7 @@ fn main() {
                 imagesize::blob_size(&rendered_pages[4][i]).unwrap().height,
             ].iter().max().unwrap();
 
-            let stroke_width = 3.0;
+            let stroke_width = min(max_width, max_height) as f32 / 75.0;
 
             let path = {
                 let mut pb = PathBuilder::new();
