@@ -1,7 +1,4 @@
-use crate::renderer::{
-    MupdfRenderer, PdfiumRenderer, PdfjsRenderer, QuartzRenderer, RenderOptions, Renderer,
-    XpdfRenderer,
-};
+use crate::renderer::{RenderOptions, Renderer};
 use std::cmp::min;
 use std::path::{Path, PathBuf};
 use tiny_skia::{Paint, PathBuilder, Pixmap, PixmapPaint, Stroke, Transform};
@@ -12,12 +9,12 @@ mod renderer;
 fn main() {
     let _ = std::fs::remove_dir_all("test");
 
-    let renderers: Vec<Box<dyn Renderer>> = vec![
-        Box::from(MupdfRenderer::new()),
-        Box::from(PdfiumRenderer::new()),
-        Box::from(XpdfRenderer::new()),
-        Box::from(QuartzRenderer::new()),
-        Box::from(PdfjsRenderer::new()),
+    let renderers: Vec<Renderer> = vec![
+        Renderer::MupdfRenderer,
+        Renderer::PdfiumRenderer,
+        Renderer::XpdfRenderer,
+        Renderer::QuartzRenderer,
+        Renderer::PdfjsRenderer,
     ];
 
     let root_dir = Path::new("pdf");
@@ -98,10 +95,11 @@ fn main() {
 
             for j in 0..5 {
                 let mut paint = Paint::default();
+                let cur_renderer = &renderers[j];
                 paint.set_color_rgba8(
-                    renderers[j].color().0,
-                    renderers[j].color().1,
-                    renderers[j].color().2,
+                    cur_renderer.color().0,
+                    cur_renderer.color().1,
+                    cur_renderer.color().2,
                     255,
                 );
 
