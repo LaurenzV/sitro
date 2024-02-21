@@ -24,6 +24,8 @@ pub trait Renderer {
     fn render(&self, buf: &[u8], options: &RenderOptions) -> Result<Vec<RenderedPage>, String>;
 
     fn name(&self) -> String;
+
+    fn color(&self) -> (u8, u8, u8);
 }
 
 pub struct PdfiumRenderer {
@@ -67,6 +69,10 @@ impl Renderer for PdfiumRenderer {
 
     fn name(&self) -> String {
         "pdfium".to_string()
+    }
+
+    fn color(&self) -> (u8, u8, u8) {
+        (79, 184, 35)
     }
 }
 
@@ -122,6 +128,10 @@ impl Renderer for MupdfRenderer {
 
     fn name(&self) -> String {
         "mupdf".to_string()
+    }
+
+    fn color(&self) -> (u8, u8, u8) {
+        (34, 186, 184)
     }
 }
 
@@ -180,6 +190,10 @@ impl Renderer for XpdfRenderer {
     fn name(&self) -> String {
         "xpdf".to_string()
     }
+
+    fn color(&self) -> (u8, u8, u8) {
+        (227, 137, 20)
+    }
 }
 
 pub struct QuartzRenderer {}
@@ -235,6 +249,10 @@ impl Renderer for QuartzRenderer {
 
     fn name(&self) -> String {
         "quartz".to_string()
+    }
+
+    fn color(&self) -> (u8, u8, u8) {
+        (234, 250, 60)
     }
 }
 
@@ -293,5 +311,9 @@ impl Renderer for PdfjsRenderer {
 
     fn name(&self) -> String {
         "pdfjs".to_string()
+    }
+
+    fn color(&self) -> (u8, u8, u8) {
+        (48, 17, 207)
     }
 }
