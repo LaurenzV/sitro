@@ -27,6 +27,7 @@ pub enum Renderer {
     XpdfRenderer,
     QuartzRenderer,
     PdfjsRenderer,
+    PdfboxRenderer,
 }
 
 impl Renderer {
@@ -37,6 +38,7 @@ impl Renderer {
             Renderer::XpdfRenderer => "xpdf".to_string(),
             Renderer::QuartzRenderer => "quartz".to_string(),
             Renderer::PdfjsRenderer => "pdfjs".to_string(),
+            Renderer::PdfboxRenderer => "pdfbox".to_string(),
         }
     }
 
@@ -47,6 +49,7 @@ impl Renderer {
             Renderer::XpdfRenderer => (227, 137, 20),
             Renderer::QuartzRenderer => (234, 250, 60),
             Renderer::PdfjsRenderer => (48, 17, 207),
+            Renderer::PdfboxRenderer => (237, 38, 98),
         }
     }
 
@@ -124,6 +127,7 @@ impl Renderer {
             Renderer::XpdfRenderer => self.render_xpdf(buf, options),
             Renderer::QuartzRenderer => self.render_quartz(buf, options),
             Renderer::PdfjsRenderer => self.render_pdfjs(buf, options),
+            Renderer::PdfboxRenderer => self.render_pdfbox(buf, options),
         }
     }
 
@@ -200,6 +204,29 @@ impl Renderer {
                 .arg(options.scale.to_string())
                 .output()
                 .map_err(|_| "failed to run renderer".to_string())
+        };
+
+        let out_file_pattern = r"(?m)-(\d+).png";
+
+        self.render_via_cli(buf, command, out_file_pattern)
+    }
+
+    fn render_pdfbox(&self, buf: &[u8], options: &RenderOptions) -> SitroResult {
+        let command = |input_path: &Path, dir: &Path| {
+            let res = Command::new("java")
+                .arg("-jar")
+                .arg(env::var("PDFBOX_BIN").unwrap())
+                .arg("render")
+                .arg("-format")
+                .arg("png")
+                .arg("-i")
+                .arg(&input_path)
+                .arg("-dpi")
+                .arg(format!("{}", 72.0 * options.scale))
+                .output()
+                .map_err(|_| "failed to run renderer".to_string());
+            println!("{:?}", res);
+            return res;
         };
 
         let out_file_pattern = r"(?m)-(\d+).png";

@@ -16,6 +16,7 @@ fn main() {
         Renderer::XpdfRenderer,
         Renderer::QuartzRenderer,
         Renderer::PdfjsRenderer,
+        Renderer::PdfboxRenderer,
     ];
 
     let root_dir = Path::new("pdf");
@@ -39,7 +40,7 @@ fn main() {
                     renderer.name()
                 );
                 renderer
-                    .render_as_pixmap(&file, &RenderOptions { scale: 4.0 }, Some(1.0 / 50.0))
+                    .render_as_pixmap(&file, &RenderOptions { scale: 1.75 }, Some(1.0 / 50.0))
                     .unwrap()
             })
             .collect::<Vec<_>>();
@@ -59,7 +60,7 @@ fn main() {
 
             let mut cursor = 0.0;
 
-            for j in 0..5 {
+            for j in 0..renderers.len() {
                 let cur_pixmap = rendered_pages[j][i].as_ref();
                 pixmap.draw_pixmap(
                     0,
