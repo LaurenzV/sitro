@@ -1,7 +1,7 @@
 use crate::renderer::{RenderOptions, Renderer};
-use std::path::{Path, PathBuf};
 use rayon::iter::IntoParallelRefIterator;
 use rayon::iter::ParallelIterator;
+use std::path::{Path, PathBuf};
 use tiny_skia::{Pixmap, PixmapPaint, Transform};
 use walkdir::WalkDir;
 
@@ -33,7 +33,11 @@ fn main() {
         let rendered_pages = renderers
             .par_iter()
             .map(|renderer| {
-                println!("rendering {} with {}", pdf_path.to_string_lossy(), renderer.name());
+                println!(
+                    "rendering {} with {}",
+                    pdf_path.to_string_lossy(),
+                    renderer.name()
+                );
                 renderer
                     .render_as_pixmap(&file, &RenderOptions { scale: 4.0 }, Some(1.0 / 50.0))
                     .unwrap()

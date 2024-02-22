@@ -1,9 +1,9 @@
 use std::cmp::min;
-use std::fs;
 use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
+use std::{env, fs};
 use tempdir::TempDir;
 use tiny_skia::{Paint, PathBuilder, Pixmap, PixmapPaint, Stroke, Transform};
 
@@ -129,7 +129,7 @@ impl Renderer {
 
     fn render_pdfium(&self, buf: &[u8], options: &RenderOptions) -> SitroResult {
         let command = |input_path: &Path, dir: &Path| {
-            Command::new("target/release/pdfium")
+            Command::new(env::var("PDFIUM_BIN").unwrap())
                 .arg(&input_path)
                 .arg(PathBuf::from(dir).join("out-%d.png"))
                 .arg((options.scale).to_string())
@@ -144,7 +144,7 @@ impl Renderer {
 
     fn render_mupdf(&self, buf: &[u8], options: &RenderOptions) -> SitroResult {
         let command = |input_path: &Path, dir: &Path| {
-            Command::new("mutool")
+            Command::new(env::var("MUPDF_BIN").unwrap())
                 .arg("draw")
                 .arg("-r")
                 .arg((72.0 * options.scale).to_string())
@@ -162,7 +162,7 @@ impl Renderer {
 
     fn render_xpdf(&self, buf: &[u8], options: &RenderOptions) -> SitroResult {
         let command = |input_path: &Path, dir: &Path| {
-            Command::new("pdftopng")
+            Command::new(env::var("XPDF_BIN").unwrap())
                 .arg("-r")
                 .arg((72.0 * options.scale).to_string())
                 .arg(&input_path)
@@ -178,7 +178,7 @@ impl Renderer {
 
     fn render_quartz(&self, buf: &[u8], options: &RenderOptions) -> SitroResult {
         let command = |input_path: &Path, dir: &Path| {
-            Command::new("src/quartz/quartz_render")
+            Command::new(env::var("QUARTZ_BIN").unwrap())
                 .arg(&input_path)
                 .arg(&dir)
                 .arg(options.scale.to_string())
@@ -194,7 +194,7 @@ impl Renderer {
     fn render_pdfjs(&self, buf: &[u8], options: &RenderOptions) -> SitroResult {
         let command = |input_path: &Path, dir: &Path| {
             Command::new("node")
-                .arg("src/pdfjs/pdfjs_render.mjs")
+                .arg(env::var("PDFJS_BIN").unwrap())
                 .arg(&input_path)
                 .arg(&dir)
                 .arg(options.scale.to_string())
