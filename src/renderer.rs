@@ -156,7 +156,7 @@ impl Renderer {
                 .arg(PathBuf::from(dir).join("out-%d.png"))
                 .arg(&input_path)
                 .output()
-                .map_err(|_| "failed to run renderer".to_string())
+                .map_err(|e| e.to_string())
         };
 
         let out_file_pattern = r"(?m)out-(\d+).png";
@@ -225,7 +225,6 @@ impl Renderer {
                 .arg(format!("{}", 72.0 * options.scale))
                 .output()
                 .map_err(|_| "failed to run renderer".to_string());
-            println!("{:?}", res);
             return res;
         };
 
