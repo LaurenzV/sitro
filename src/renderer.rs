@@ -225,7 +225,6 @@ impl Renderer {
                 .arg(format!("{}", 72.0 * options.scale))
                 .output()
                 .map_err(|_| "failed to run renderer".to_string());
-            println!("{:?}", res);
             return res;
         };
 

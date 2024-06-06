@@ -13,10 +13,10 @@ fn main() {
     let renderers: Vec<Renderer> = vec![
         Renderer::MupdfRenderer,
         Renderer::PdfiumRenderer,
-        Renderer::XpdfRenderer,
         Renderer::QuartzRenderer,
         Renderer::PdfjsRenderer,
-        Renderer::PdfboxRenderer,
+        Renderer::XpdfRenderer,
+        // Renderer::PdfboxRenderer,
     ];
 
     let root_dir = Path::new("pdf");
@@ -75,9 +75,9 @@ fn main() {
             }
 
             let mut dir = PathBuf::from("test");
-            dir.push(pdf_path.with_extension("").strip_prefix(root_dir).unwrap());
+            dir.push(pdf_path.parent().unwrap());
             let mut path = dir.clone();
-            path.push(format!("{}.png", i));
+            path.push(format!("{}-{}.png", pdf_path.file_stem().unwrap().to_str().unwrap(), i));
             let _ = std::fs::create_dir_all(dir);
             pixmap.save_png(&path).unwrap();
         }
