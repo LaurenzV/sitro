@@ -20,43 +20,52 @@ impl Default for RenderOptions {
     }
 }
 
+/// A page rendered as a PNG image.
 pub type RenderedPage = Vec<u8>;
+/// A document rendered as PNG images.
 pub type RenderedDocument = Vec<RenderedPage>;
-type SitroResult = Result<Vec<RenderedPage>, String>;
 
+/// A PDF backend used to render a PDF. Each backend calls a command-line
+/// utility in the background
 pub enum Renderer {
-    PdfiumRenderer,
-    MupdfRenderer,
-    XpdfRenderer,
+    /// The pdfium renderer.
+    Pdfium,
+    /// The mupdf renderer.
+    Mupdf,
+    /// The xpdf renderer.
+    Xpdf,
+    /// The quartz renderer.
     QuartzRenderer,
+    /// The pdf.js renderer.
     PdfjsRenderer,
+    /// The pdfbox renderer.
     PdfboxRenderer,
 }
 
 impl Renderer {
-    pub fn name(&self) -> String {
+    pub(crate) fn name(&self) -> String {
         match self {
-            Renderer::PdfiumRenderer => "pdfium".to_string(),
-            Renderer::MupdfRenderer => "mupdf".to_string(),
-            Renderer::XpdfRenderer => "xpdf".to_string(),
+            Renderer::Pdfium => "pdfium".to_string(),
+            Renderer::Mupdf => "mupdf".to_string(),
+            Renderer::Xpdf => "xpdf".to_string(),
             Renderer::QuartzRenderer => "quartz".to_string(),
             Renderer::PdfjsRenderer => "pdfjs".to_string(),
             Renderer::PdfboxRenderer => "pdfbox".to_string(),
         }
     }
 
-    pub fn color(&self) -> (u8, u8, u8) {
+    pub(crate) fn color(&self) -> (u8, u8, u8) {
         match self {
-            Renderer::PdfiumRenderer => (79, 184, 35),
-            Renderer::MupdfRenderer => (34, 186, 184),
-            Renderer::XpdfRenderer => (227, 137, 20),
+            Renderer::Pdfium => (79, 184, 35),
+            Renderer::Mupdf => (34, 186, 184),
+            Renderer::Xpdf => (227, 137, 20),
             Renderer::QuartzRenderer => (234, 250, 60),
             Renderer::PdfjsRenderer => (48, 17, 207),
             Renderer::PdfboxRenderer => (237, 38, 98),
         }
     }
 
-    pub fn render_as_pixmap(
+    pub(crate) fn render_as_pixmap(
         &self,
         buf: &[u8],
         options: &RenderOptions,
@@ -123,11 +132,12 @@ impl Renderer {
         Ok(pixmaps)
     }
 
-    pub fn render_as_png(&self, buf: &[u8], options: &RenderOptions) -> SitroResult {
+    /// Render a PDF file as a sequence of PDF files, using the specified renderer.
+    pub fn render_as_png(&self, buf: &[u8], options: &RenderOptions) -> Result<RenderedDocument, String> {
         match self {
-            Renderer::PdfiumRenderer => render_pdfium(buf, options),
-            Renderer::MupdfRenderer => render_mupdf(buf, options),
-            Renderer::XpdfRenderer => render_xpdf(buf, options),
+            Renderer::Pdfium => render_pdfium(buf, options),
+            Renderer::Mupdf => render_mupdf(buf, options),
+            Renderer::Xpdf => render_xpdf(buf, options),
             Renderer::QuartzRenderer => render_quartz(buf, options),
             Renderer::PdfjsRenderer => render_pdfjs(buf, options),
             Renderer::PdfboxRenderer => render_pdfbox(buf, options),
@@ -135,7 +145,8 @@ impl Renderer {
     }
 }
 
-pub fn render_pdfium(buf: &[u8], options: &RenderOptions) -> SitroResult {
+/// Render a PDF file using pdfium.
+pub fn render_pdfium(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocument, String> {
     let command = |input_path: &Path, dir: &Path| {
         Command::new(env::var("PDFIUM_BIN").unwrap())
             .arg(&input_path)
@@ -150,7 +161,8 @@ pub fn render_pdfium(buf: &[u8], options: &RenderOptions) -> SitroResult {
     render_via_cli(buf, command, out_file_pattern)
 }
 
-pub fn render_mupdf(buf: &[u8], options: &RenderOptions) -> SitroResult {
+/// Render a PDF file using mupdf.
+pub fn render_mupdf(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocument, String> {
     let command = |input_path: &Path, dir: &Path| {
         Command::new(env::var("MUPDF_BIN").unwrap())
             .arg("draw")
@@ -168,7 +180,8 @@ pub fn render_mupdf(buf: &[u8], options: &RenderOptions) -> SitroResult {
     render_via_cli(buf, command, out_file_pattern)
 }
 
-pub fn render_xpdf(buf: &[u8], options: &RenderOptions) -> SitroResult {
+/// Render a PDF file using xpdf.
+pub fn render_xpdf(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocument, String> {
     let command = |input_path: &Path, dir: &Path| {
         Command::new(env::var("XPDF_BIN").unwrap())
             .arg("-r")
@@ -184,7 +197,8 @@ pub fn render_xpdf(buf: &[u8], options: &RenderOptions) -> SitroResult {
     render_via_cli(buf, command, out_file_pattern)
 }
 
-pub fn render_quartz(buf: &[u8], options: &RenderOptions) -> SitroResult {
+/// Render a PDF file using quartz.
+pub fn render_quartz(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocument, String> {
     let command = |input_path: &Path, dir: &Path| {
         Command::new(env::var("QUARTZ_BIN").unwrap())
             .arg(&input_path)
@@ -199,7 +213,8 @@ pub fn render_quartz(buf: &[u8], options: &RenderOptions) -> SitroResult {
     render_via_cli(buf, command, out_file_pattern)
 }
 
-pub fn render_pdfjs(buf: &[u8], options: &RenderOptions) -> SitroResult {
+/// Render a PDF file using pdf.js.
+pub fn render_pdfjs(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocument, String> {
     let command = |input_path: &Path, dir: &Path| {
         Command::new("node")
             .arg(env::var("PDFJS_BIN").unwrap())
@@ -215,8 +230,9 @@ pub fn render_pdfjs(buf: &[u8], options: &RenderOptions) -> SitroResult {
     render_via_cli(buf, command, out_file_pattern)
 }
 
-pub fn render_pdfbox(buf: &[u8], options: &RenderOptions) -> SitroResult {
-    let command = |input_path: &Path, dir: &Path| {
+/// Render a PDF file using pdfbox.
+pub fn render_pdfbox(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocument, String> {
+    let command = |input_path: &Path, _: &Path| {
         let res = Command::new("java")
             .arg("-jar")
             .arg(env::var("PDFBOX_BIN").unwrap())
@@ -237,7 +253,7 @@ pub fn render_pdfbox(buf: &[u8], options: &RenderOptions) -> SitroResult {
     render_via_cli(buf, command, out_file_pattern)
 }
 
-fn render_via_cli<F>(buf: &[u8], command_fn: F, out_file_pattern: &str) -> SitroResult
+fn render_via_cli<F>(buf: &[u8], command_fn: F, out_file_pattern: &str) -> Result<RenderedDocument, String>
 where
     F: Fn(&Path, &Path) -> Result<Output, String>,
 {
@@ -249,7 +265,7 @@ where
     let mut output_dir = PathBuf::from(dir.path());
     output_dir.push("");
 
-    let output = command_fn(&input_path, &output_dir)?;
+    let _ = command_fn(&input_path, &output_dir)?;
 
     let mut out_files: Vec<(i32, PathBuf)> = fs::read_dir(dir.path())
         .map_err(|_| "")?

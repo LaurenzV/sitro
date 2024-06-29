@@ -1,4 +1,3 @@
-/*!
 # Motivation
 The purpose of this crate is to provide a unified interface into rendering a PDF with
 different renderers. The PDF specification is complex, and for a PDF producer it's easy to do
@@ -63,12 +62,3 @@ Note that this crate isn't in the best "shape" in terms of structure and documen
 for this is that I mainly use it for personal purposes, so I didn't put a lot of effort into cleaning
 it up, and that's why it's also not released on crates.io. Nevertheless, it should still work fine
 for anyone who has the exact need of rendering a PDF with different backends.
-*/
-
-#![forbid(unsafe_code)]
-#![warn(missing_docs)]
-#![allow(dead_code)]
-
-mod renderer;
-pub use renderer::*;
-

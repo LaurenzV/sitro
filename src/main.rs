@@ -11,9 +11,9 @@ fn main() {
     let _ = std::fs::remove_dir_all("test");
 
     let renderers: Vec<Renderer> = vec![
-        Renderer::MupdfRenderer,
-        Renderer::PdfiumRenderer,
-        Renderer::XpdfRenderer,
+        Renderer::Mupdf,
+        Renderer::Pdfium,
+        Renderer::Xpdf,
         Renderer::QuartzRenderer,
         Renderer::PdfjsRenderer,
         Renderer::PdfboxRenderer,
