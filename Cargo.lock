@@ -390,15 +390,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "029d73f573d8e8d63e6d5020011d3255b28c3ba85d6cf870a07184ed23de9284"
 
 [[package]]
-name = "iter_tools"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a621162e5c4229abff44d46655dcb777f6064daa851e046df17baf74c9ddf079"
-dependencies = [
- "itertools",
-]
-
-[[package]]
 name = "itertools"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -554,9 +545,9 @@ dependencies = [
 
 [[package]]
 name = "pdfium-render"
-version = "0.8.17"
+version = "0.8.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "165f53a33ddbf09c92fd46750b7ffdc9ca77034f040c97ee7f25b6d99a86662e"
+checksum = "50d2f2669618a1ae68a86fe975fdda1c6a0b6dc9d5358ea8d2cdcd8da3307e5a"
 dependencies = [
  "bindgen",
  "bitflags 2.4.1",
@@ -566,7 +557,7 @@ dependencies = [
  "console_error_panic_hook",
  "console_log",
  "image",
- "iter_tools",
+ "itertools",
  "js-sys",
  "libloading 0.8.1",
  "log",

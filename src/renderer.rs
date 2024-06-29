@@ -7,6 +7,7 @@ use std::{env, fs};
 use tempdir::TempDir;
 use tiny_skia::{Paint, PathBuilder, Pixmap, PixmapPaint, Stroke, Transform};
 
+/// The options that should be applied when rendering a PDF to a pixmap.
 #[derive(Copy, Clone)]
 pub struct RenderOptions {
     pub scale: f32,

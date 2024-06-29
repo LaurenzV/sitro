@@ -5,6 +5,9 @@ use std::io::Cursor;
 use std::path::Path;
 
 fn main() -> Result<(), String> {
+    let pdfium =
+        Pdfium::new( Pdfium::bind_to_system_library().map_err(|_| "failed to link to pdfium")?);
+
     let args: Vec<_> = std::env::args().collect();
     let input_path = Path::new(args.get(1).ok_or("input path missing")?);
     let output_path = Path::new(args.get(2).ok_or("output path missing")?);
@@ -15,11 +18,6 @@ fn main() -> Result<(), String> {
         .map_err(|_| "invalid scale")?;
 
     let file = std::fs::read(input_path).map_err(|_| "couldnt read input file")?;
-
-    let pdfium =
-        Pdfium::new( Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path(
-            "/Users/lstampfl/lib/",
-        )).unwrap());
 
     let document = pdfium
         .load_pdf_from_byte_slice(&file, None)
