@@ -10,6 +10,7 @@ use tiny_skia::{Paint, PathBuilder, Pixmap, PixmapPaint, Stroke, Transform};
 /// The options that should be applied when rendering a PDF to a pixmap.
 #[derive(Copy, Clone)]
 pub struct RenderOptions {
+    /// By how much the original size should be scaled.
     pub scale: f32,
 }
 
@@ -19,7 +20,8 @@ impl Default for RenderOptions {
     }
 }
 
-type RenderedPage = Vec<u8>;
+pub type RenderedPage = Vec<u8>;
+pub type RenderedDocument = Vec<RenderedPage>;
 type SitroResult = Result<Vec<RenderedPage>, String>;
 
 pub enum Renderer {
@@ -123,153 +125,153 @@ impl Renderer {
 
     pub fn render_as_png(&self, buf: &[u8], options: &RenderOptions) -> SitroResult {
         match self {
-            Renderer::PdfiumRenderer => self.render_pdfium(buf, options),
-            Renderer::MupdfRenderer => self.render_mupdf(buf, options),
-            Renderer::XpdfRenderer => self.render_xpdf(buf, options),
-            Renderer::QuartzRenderer => self.render_quartz(buf, options),
-            Renderer::PdfjsRenderer => self.render_pdfjs(buf, options),
-            Renderer::PdfboxRenderer => self.render_pdfbox(buf, options),
+            Renderer::PdfiumRenderer => render_pdfium(buf, options),
+            Renderer::MupdfRenderer => render_mupdf(buf, options),
+            Renderer::XpdfRenderer => render_xpdf(buf, options),
+            Renderer::QuartzRenderer => render_quartz(buf, options),
+            Renderer::PdfjsRenderer => render_pdfjs(buf, options),
+            Renderer::PdfboxRenderer => render_pdfbox(buf, options),
         }
     }
+}
 
-    fn render_pdfium(&self, buf: &[u8], options: &RenderOptions) -> SitroResult {
-        let command = |input_path: &Path, dir: &Path| {
-            Command::new(env::var("PDFIUM_BIN").unwrap())
-                .arg(&input_path)
-                .arg(PathBuf::from(dir).join("out-%d.png"))
-                .arg((options.scale).to_string())
-                .output()
-                .map_err(|_| "failed to run renderer".to_string())
-        };
+pub fn render_pdfium(buf: &[u8], options: &RenderOptions) -> SitroResult {
+    let command = |input_path: &Path, dir: &Path| {
+        Command::new(env::var("PDFIUM_BIN").unwrap())
+            .arg(&input_path)
+            .arg(PathBuf::from(dir).join("out-%d.png"))
+            .arg((options.scale).to_string())
+            .output()
+            .map_err(|_| "failed to run renderer".to_string())
+    };
 
-        let out_file_pattern = r"(?m)out-(\d+).png";
+    let out_file_pattern = r"(?m)out-(\d+).png";
 
-        self.render_via_cli(buf, command, out_file_pattern)
-    }
+    render_via_cli(buf, command, out_file_pattern)
+}
 
-    fn render_mupdf(&self, buf: &[u8], options: &RenderOptions) -> SitroResult {
-        let command = |input_path: &Path, dir: &Path| {
-            Command::new(env::var("MUPDF_BIN").unwrap())
-                .arg("draw")
-                .arg("-r")
-                .arg((72.0 * options.scale).to_string())
-                .arg("-o")
-                .arg(PathBuf::from(dir).join("out-%d.png"))
-                .arg(&input_path)
-                .output()
-                .map_err(|e| e.to_string())
-        };
+pub fn render_mupdf(buf: &[u8], options: &RenderOptions) -> SitroResult {
+    let command = |input_path: &Path, dir: &Path| {
+        Command::new(env::var("MUPDF_BIN").unwrap())
+            .arg("draw")
+            .arg("-r")
+            .arg((72.0 * options.scale).to_string())
+            .arg("-o")
+            .arg(PathBuf::from(dir).join("out-%d.png"))
+            .arg(&input_path)
+            .output()
+            .map_err(|e| e.to_string())
+    };
 
-        let out_file_pattern = r"(?m)out-(\d+).png";
+    let out_file_pattern = r"(?m)out-(\d+).png";
 
-        self.render_via_cli(buf, command, out_file_pattern)
-    }
+    render_via_cli(buf, command, out_file_pattern)
+}
 
-    fn render_xpdf(&self, buf: &[u8], options: &RenderOptions) -> SitroResult {
-        let command = |input_path: &Path, dir: &Path| {
-            Command::new(env::var("XPDF_BIN").unwrap())
-                .arg("-r")
-                .arg((72.0 * options.scale).to_string())
-                .arg(&input_path)
-                .arg(&dir)
-                .output()
-                .map_err(|_| "failed to run renderer".to_string())
-        };
+pub fn render_xpdf(buf: &[u8], options: &RenderOptions) -> SitroResult {
+    let command = |input_path: &Path, dir: &Path| {
+        Command::new(env::var("XPDF_BIN").unwrap())
+            .arg("-r")
+            .arg((72.0 * options.scale).to_string())
+            .arg(&input_path)
+            .arg(&dir)
+            .output()
+            .map_err(|_| "failed to run renderer".to_string())
+    };
 
-        let out_file_pattern = r"(?m)-(\d+).png";
+    let out_file_pattern = r"(?m)-(\d+).png";
 
-        self.render_via_cli(buf, command, out_file_pattern)
-    }
+    render_via_cli(buf, command, out_file_pattern)
+}
 
-    fn render_quartz(&self, buf: &[u8], options: &RenderOptions) -> SitroResult {
-        let command = |input_path: &Path, dir: &Path| {
-            Command::new(env::var("QUARTZ_BIN").unwrap())
-                .arg(&input_path)
-                .arg(&dir)
-                .arg(options.scale.to_string())
-                .output()
-                .map_err(|_| "failed to run renderer".to_string())
-        };
+pub fn render_quartz(buf: &[u8], options: &RenderOptions) -> SitroResult {
+    let command = |input_path: &Path, dir: &Path| {
+        Command::new(env::var("QUARTZ_BIN").unwrap())
+            .arg(&input_path)
+            .arg(&dir)
+            .arg(options.scale.to_string())
+            .output()
+            .map_err(|_| "failed to run renderer".to_string())
+    };
 
-        let out_file_pattern = r"(?m)-(\d+).png";
+    let out_file_pattern = r"(?m)-(\d+).png";
 
-        self.render_via_cli(buf, command, out_file_pattern)
-    }
+    render_via_cli(buf, command, out_file_pattern)
+}
 
-    fn render_pdfjs(&self, buf: &[u8], options: &RenderOptions) -> SitroResult {
-        let command = |input_path: &Path, dir: &Path| {
-            Command::new("node")
-                .arg(env::var("PDFJS_BIN").unwrap())
-                .arg(&input_path)
-                .arg(&dir)
-                .arg(options.scale.to_string())
-                .output()
-                .map_err(|_| "failed to run renderer".to_string())
-        };
+pub fn render_pdfjs(buf: &[u8], options: &RenderOptions) -> SitroResult {
+    let command = |input_path: &Path, dir: &Path| {
+        Command::new("node")
+            .arg(env::var("PDFJS_BIN").unwrap())
+            .arg(&input_path)
+            .arg(&dir)
+            .arg(options.scale.to_string())
+            .output()
+            .map_err(|_| "failed to run renderer".to_string())
+    };
 
-        let out_file_pattern = r"(?m)-(\d+).png";
+    let out_file_pattern = r"(?m)-(\d+).png";
 
-        self.render_via_cli(buf, command, out_file_pattern)
-    }
+    render_via_cli(buf, command, out_file_pattern)
+}
 
-    fn render_pdfbox(&self, buf: &[u8], options: &RenderOptions) -> SitroResult {
-        let command = |input_path: &Path, dir: &Path| {
-            let res = Command::new("java")
-                .arg("-jar")
-                .arg(env::var("PDFBOX_BIN").unwrap())
-                .arg("render")
-                .arg("-format")
-                .arg("png")
-                .arg("-i")
-                .arg(&input_path)
-                .arg("-dpi")
-                .arg(format!("{}", 72.0 * options.scale))
-                .output()
-                .map_err(|_| "failed to run renderer".to_string());
-            return res;
-        };
+pub fn render_pdfbox(buf: &[u8], options: &RenderOptions) -> SitroResult {
+    let command = |input_path: &Path, dir: &Path| {
+        let res = Command::new("java")
+            .arg("-jar")
+            .arg(env::var("PDFBOX_BIN").unwrap())
+            .arg("render")
+            .arg("-format")
+            .arg("png")
+            .arg("-i")
+            .arg(&input_path)
+            .arg("-dpi")
+            .arg(format!("{}", 72.0 * options.scale))
+            .output()
+            .map_err(|_| "failed to run renderer".to_string());
+        return res;
+    };
 
-        let out_file_pattern = r"(?m)-(\d+).png";
+    let out_file_pattern = r"(?m)-(\d+).png";
 
-        self.render_via_cli(buf, command, out_file_pattern)
-    }
+    render_via_cli(buf, command, out_file_pattern)
+}
 
-    fn render_via_cli<F>(&self, buf: &[u8], command_fn: F, out_file_pattern: &str) -> SitroResult
-    where
-        F: Fn(&Path, &Path) -> Result<Output, String>,
-    {
-        let dir = TempDir::new("sitro").unwrap();
-        let input_path = dir.path().join("file.pdf");
-        let mut input_file = File::create(&input_path).unwrap();
-        input_file.write(buf).unwrap();
+fn render_via_cli<F>(buf: &[u8], command_fn: F, out_file_pattern: &str) -> SitroResult
+where
+    F: Fn(&Path, &Path) -> Result<Output, String>,
+{
+    let dir = TempDir::new("sitro").unwrap();
+    let input_path = dir.path().join("file.pdf");
+    let mut input_file = File::create(&input_path).unwrap();
+    input_file.write(buf).unwrap();
 
-        let mut output_dir = PathBuf::from(dir.path());
-        output_dir.push("");
+    let mut output_dir = PathBuf::from(dir.path());
+    output_dir.push("");
 
-        let output = command_fn(&input_path, &output_dir)?;
+    let output = command_fn(&input_path, &output_dir)?;
 
-        let mut out_files: Vec<(i32, PathBuf)> = fs::read_dir(dir.path())
-            .map_err(|_| "")?
-            .filter_map(|entry| entry.ok())
-            .map(|entry| entry.path())
-            .filter_map(|path| {
-                path.file_name()
-                    .and_then(|name| name.to_str())
-                    .and_then(|name| {
-                        let captures = regex::Regex::new(out_file_pattern)
-                            .unwrap()
-                            .captures(name)?;
-                        let num_str = captures.get(1)?;
-                        let num: i32 = num_str.as_str().parse().ok()?;
-                        Some((num, path.clone()))
-                    })
-            })
-            .collect::<Vec<_>>();
+    let mut out_files: Vec<(i32, PathBuf)> = fs::read_dir(dir.path())
+        .map_err(|_| "")?
+        .filter_map(|entry| entry.ok())
+        .map(|entry| entry.path())
+        .filter_map(|path| {
+            path.file_name()
+                .and_then(|name| name.to_str())
+                .and_then(|name| {
+                    let captures = regex::Regex::new(out_file_pattern)
+                        .unwrap()
+                        .captures(name)?;
+                    let num_str = captures.get(1)?;
+                    let num: i32 = num_str.as_str().parse().ok()?;
+                    Some((num, path.clone()))
+                })
+        })
+        .collect::<Vec<_>>();
 
-        out_files.sort_by_key(|e| e.0);
+    out_files.sort_by_key(|e| e.0);
 
-        let out_files = out_files.iter().map(|e| fs::read(&e.1).unwrap()).collect();
+    let out_files = out_files.iter().map(|e| fs::read(&e.1).unwrap()).collect();
 
-        Ok(out_files)
-    }
+    Ok(out_files)
 }
