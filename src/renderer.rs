@@ -43,7 +43,7 @@ pub enum Renderer {
 }
 
 impl Renderer {
-    pub(crate) fn name(&self) -> String {
+    pub fn name(&self) -> String {
         match self {
             Renderer::Pdfium => "pdfium".to_string(),
             Renderer::Mupdf => "mupdf".to_string(),
