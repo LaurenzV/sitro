@@ -244,7 +244,7 @@ pub fn render_pdfbox(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocu
             .arg("-dpi")
             .arg(format!("{}", 72.0 * options.scale))
             .output()
-            .map_err(|e| format!("{}: {}", "failed to run renderer", e))
+            .map_err(|e| format!("{}: {}", "failed to run renderer", e));
         return res;
     };
 
