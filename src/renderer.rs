@@ -153,7 +153,7 @@ pub fn render_pdfium(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocu
             .arg(PathBuf::from(dir).join("out-%d.png"))
             .arg((options.scale).to_string())
             .output()
-            .map_err(|_| "failed to run renderer".to_string())
+            .map_err(|e| format!("{}: {}", "failed to run renderer", e))
     };
 
     let out_file_pattern = r"(?m)out-(\d+).png";
@@ -189,7 +189,7 @@ pub fn render_xpdf(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocume
             .arg(&input_path)
             .arg(&dir)
             .output()
-            .map_err(|_| "failed to run renderer".to_string())
+            .map_err(|e| format!("{}: {}", "failed to run renderer", e))
     };
 
     let out_file_pattern = r"(?m)-(\d+).png";
@@ -205,7 +205,7 @@ pub fn render_quartz(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocu
             .arg(&dir)
             .arg(options.scale.to_string())
             .output()
-            .map_err(|_| "failed to run renderer".to_string())
+            .map_err(|e| format!("{}: {}", "failed to run renderer", e))
     };
 
     let out_file_pattern = r"(?m)-(\d+).png";
@@ -222,7 +222,7 @@ pub fn render_pdfjs(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocum
             .arg(&dir)
             .arg(options.scale.to_string())
             .output()
-            .map_err(|_| "failed to run renderer".to_string())
+            .map_err(|e| format!("{}: {}", "failed to run renderer", e))
     };
 
     let out_file_pattern = r"(?m)-(\d+).png";
@@ -244,7 +244,7 @@ pub fn render_pdfbox(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocu
             .arg("-dpi")
             .arg(format!("{}", 72.0 * options.scale))
             .output()
-            .map_err(|_| "failed to run renderer".to_string());
+            .map_err(|e| format!("{}: {}", "failed to run renderer", e))
         return res;
     };
 
