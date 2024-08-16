@@ -245,6 +245,7 @@ pub fn render_pdfbox(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocu
             .arg(format!("{}", 72.0 * options.scale))
             .output()
             .map_err(|e| format!("{}: {}", "failed to run renderer", e));
+        eprintln!("{:?}", res);
         return res;
     };
 
