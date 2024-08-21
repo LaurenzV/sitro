@@ -14,6 +14,7 @@ class NodeCanvasFactory {
         assert(width > 0 && height > 0, "Invalid canvas size");
 
         const canvas = new Canvas(width, height);
+        canvas.gpu = false;
         const context = canvas.getContext("2d");
         return { canvas, context };
     }
