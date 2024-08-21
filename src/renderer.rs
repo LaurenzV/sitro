@@ -35,11 +35,11 @@ pub enum Renderer {
     /// The poppler renderer.
     Poppler,
     /// The quartz renderer.
-    QuartzRenderer,
+    Quartz,
     /// The pdf.js renderer.
-    PdfjsRenderer,
+    Pdfjs,
     /// The pdfbox renderer.
-    PdfboxRenderer,
+    Pdfbox,
     /// The ghostscript renderer.
     Ghostscript
 }
@@ -50,9 +50,9 @@ impl Renderer {
             Renderer::Pdfium => "pdfium".to_string(),
             Renderer::Mupdf => "mupdf".to_string(),
             Renderer::Poppler => "poppler".to_string(),
-            Renderer::QuartzRenderer => "quartz".to_string(),
-            Renderer::PdfjsRenderer => "pdfjs".to_string(),
-            Renderer::PdfboxRenderer => "pdfbox".to_string(),
+            Renderer::Quartz => "quartz".to_string(),
+            Renderer::Pdfjs => "pdfjs".to_string(),
+            Renderer::Pdfbox => "pdfbox".to_string(),
             Renderer::Ghostscript => "ghostscript".to_string(),
         }
     }
@@ -62,9 +62,9 @@ impl Renderer {
             Renderer::Pdfium => (79, 184, 35),
             Renderer::Mupdf => (34, 186, 184),
             Renderer::Poppler => (227, 137, 20),
-            Renderer::QuartzRenderer => (234, 250, 60),
-            Renderer::PdfjsRenderer => (48, 17, 207),
-            Renderer::PdfboxRenderer => (237, 38, 98),
+            Renderer::Quartz => (234, 250, 60),
+            Renderer::Pdfjs => (48, 17, 207),
+            Renderer::Pdfbox => (237, 38, 98),
             Renderer::Ghostscript => (235, 38, 218),
         }
     }
@@ -142,9 +142,9 @@ impl Renderer {
             Renderer::Pdfium => render_pdfium(buf, options),
             Renderer::Mupdf => render_mupdf(buf, options),
             Renderer::Poppler => render_poppler(buf, options),
-            Renderer::QuartzRenderer => render_quartz(buf, options),
-            Renderer::PdfjsRenderer => render_pdfjs(buf, options),
-            Renderer::PdfboxRenderer => render_pdfbox(buf, options),
+            Renderer::Quartz => render_quartz(buf, options),
+            Renderer::Pdfjs => render_pdfjs(buf, options),
+            Renderer::Pdfbox => render_pdfbox(buf, options),
             Renderer::Ghostscript => render_ghostscript(buf, options),
         }
     }

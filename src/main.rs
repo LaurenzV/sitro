@@ -15,9 +15,9 @@ fn main() {
         Renderer::Ghostscript,
         Renderer::Pdfium,
         Renderer::Poppler,
-        Renderer::QuartzRenderer,
-        Renderer::PdfjsRenderer,
-        Renderer::PdfboxRenderer,
+        Renderer::Quartz,
+        Renderer::Pdfjs,
+        Renderer::Pdfbox,
     ];
 
     let root_dir = Path::new("pdf");
