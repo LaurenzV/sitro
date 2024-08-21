@@ -41,7 +41,7 @@ pub enum Renderer {
     /// The pdfbox renderer.
     PdfboxRenderer,
     /// The ghostscript renderer.
-    GhostscriptRenderer
+    Ghostscript
 }
 
 impl Renderer {
@@ -53,7 +53,7 @@ impl Renderer {
             Renderer::QuartzRenderer => "quartz".to_string(),
             Renderer::PdfjsRenderer => "pdfjs".to_string(),
             Renderer::PdfboxRenderer => "pdfbox".to_string(),
-            Renderer::GhostscriptRenderer => "ghostscript".to_string(),
+            Renderer::Ghostscript => "ghostscript".to_string(),
         }
     }
 
@@ -65,7 +65,7 @@ impl Renderer {
             Renderer::QuartzRenderer => (234, 250, 60),
             Renderer::PdfjsRenderer => (48, 17, 207),
             Renderer::PdfboxRenderer => (237, 38, 98),
-            Renderer::GhostscriptRenderer => (235, 38, 218),
+            Renderer::Ghostscript => (235, 38, 218),
         }
     }
 
@@ -145,7 +145,7 @@ impl Renderer {
             Renderer::QuartzRenderer => render_quartz(buf, options),
             Renderer::PdfjsRenderer => render_pdfjs(buf, options),
             Renderer::PdfboxRenderer => render_pdfbox(buf, options),
-            Renderer::GhostscriptRenderer => render_ghostscript(buf, options),
+            Renderer::Ghostscript => render_ghostscript(buf, options),
         }
     }
 }
