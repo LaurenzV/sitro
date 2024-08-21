@@ -40,6 +40,8 @@ pub enum Renderer {
     PdfjsRenderer,
     /// The pdfbox renderer.
     PdfboxRenderer,
+    /// The ghostscript renderer.
+    GhostscriptRenderer
 }
 
 impl Renderer {
@@ -51,6 +53,7 @@ impl Renderer {
             Renderer::QuartzRenderer => "quartz".to_string(),
             Renderer::PdfjsRenderer => "pdfjs".to_string(),
             Renderer::PdfboxRenderer => "pdfbox".to_string(),
+            Renderer::GhostscriptRenderer => "ghostscript".to_string(),
         }
     }
 
@@ -62,6 +65,7 @@ impl Renderer {
             Renderer::QuartzRenderer => (234, 250, 60),
             Renderer::PdfjsRenderer => (48, 17, 207),
             Renderer::PdfboxRenderer => (237, 38, 98),
+            Renderer::GhostscriptRenderer => (235, 38, 218),
         }
     }
 
@@ -141,6 +145,7 @@ impl Renderer {
             Renderer::QuartzRenderer => render_quartz(buf, options),
             Renderer::PdfjsRenderer => render_pdfjs(buf, options),
             Renderer::PdfboxRenderer => render_pdfbox(buf, options),
+            Renderer::GhostscriptRenderer => render_ghostscript(buf, options),
         }
     }
 }
@@ -152,6 +157,27 @@ pub fn render_pdfium(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocu
             .arg(&input_path)
             .arg(PathBuf::from(dir).join("out-%d.png"))
             .arg((options.scale).to_string())
+            .output()
+            .map_err(|e| format!("{}: {}", "failed to run renderer", e))
+    };
+
+    let out_file_pattern = r"(?m)out-(\d+).png";
+
+    render_via_cli(buf, command, out_file_pattern)
+}
+/// Render a PDF file using ghostscript.
+pub fn render_ghostscript(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocument, String> {
+    let command = |input_path: &Path, dir: &Path| {
+        Command::new(env::var("GHOSTSCRIPT_BIN").unwrap())
+            .arg("-dNOPAUSE")
+            .arg("-sDEVICE=png16m")
+            .arg("-dGraphicsAlphaBits=4")
+            .arg("-dTextAlphaBits=4")
+            .arg("-sDEVICE=png16m")
+            .arg("-dBATCH")
+            .arg(format!("-r{}",(72.0 * options.scale).to_string()))
+            .arg(format!("-sOutputFile={}", PathBuf::from(dir).join("out-%d.png").to_str().unwrap()))
+            .arg(&input_path)
             .output()
             .map_err(|e| format!("{}: {}", "failed to run renderer", e))
     };

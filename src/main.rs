@@ -12,6 +12,7 @@ fn main() {
 
     let renderers: Vec<Renderer> = vec![
         Renderer::Mupdf,
+        Renderer::GhostscriptRenderer,
         Renderer::Pdfium,
         Renderer::Poppler,
         Renderer::QuartzRenderer,
