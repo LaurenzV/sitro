@@ -13,7 +13,7 @@ This crate supports six different rendering backends:
 - pdfium (used by Google Chrome)
 - pdf.js (used by Firefox)
 - mupdf
-- xpdf
+- poppler
 - pdfbox
 
 By having access to these six renderers, you can be certain to a certain extent that if a PDF
@@ -40,9 +40,9 @@ environment variable to the binary.
 For this backend, you simply need the `mutool` utility somewhere on your system and point the
 `MUPDF_BIN` environment variable to it.
 
-## xpdf
-For this backend, you simply need the [pdftopng](https://www.xpdfreader.com/pdftopng-man.html)
-somewhere on your system and point the `XPDF_BIN` environment variable to it.
+## poppler
+For this backend, you simply need the [pdftoppm](https://man.archlinux.org/man/pdftoppm.1.en)
+somewhere on your system and point the `POPPLER_BIN` environment variable to it.
 
 ## pdfbox
 For this backend, you need to have Java installed on your system. In addition, you need to point

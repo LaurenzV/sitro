@@ -32,8 +32,8 @@ pub enum Renderer {
     Pdfium,
     /// The mupdf renderer.
     Mupdf,
-    /// The xpdf renderer.
-    Xpdf,
+    /// The poppler renderer.
+    Poppler,
     /// The quartz renderer.
     QuartzRenderer,
     /// The pdf.js renderer.
@@ -47,7 +47,7 @@ impl Renderer {
         match self {
             Renderer::Pdfium => "pdfium".to_string(),
             Renderer::Mupdf => "mupdf".to_string(),
-            Renderer::Xpdf => "xpdf".to_string(),
+            Renderer::Poppler => "poppler".to_string(),
             Renderer::QuartzRenderer => "quartz".to_string(),
             Renderer::PdfjsRenderer => "pdfjs".to_string(),
             Renderer::PdfboxRenderer => "pdfbox".to_string(),
@@ -58,7 +58,7 @@ impl Renderer {
         match self {
             Renderer::Pdfium => (79, 184, 35),
             Renderer::Mupdf => (34, 186, 184),
-            Renderer::Xpdf => (227, 137, 20),
+            Renderer::Poppler => (227, 137, 20),
             Renderer::QuartzRenderer => (234, 250, 60),
             Renderer::PdfjsRenderer => (48, 17, 207),
             Renderer::PdfboxRenderer => (237, 38, 98),
@@ -137,7 +137,7 @@ impl Renderer {
         match self {
             Renderer::Pdfium => render_pdfium(buf, options),
             Renderer::Mupdf => render_mupdf(buf, options),
-            Renderer::Xpdf => render_xpdf(buf, options),
+            Renderer::Poppler => render_poppler(buf, options),
             Renderer::QuartzRenderer => render_quartz(buf, options),
             Renderer::PdfjsRenderer => render_pdfjs(buf, options),
             Renderer::PdfboxRenderer => render_pdfbox(buf, options),
@@ -180,14 +180,15 @@ pub fn render_mupdf(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocum
     render_via_cli(buf, command, out_file_pattern)
 }
 
-/// Render a PDF file using xpdf.
-pub fn render_xpdf(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocument, String> {
+/// Render a PDF file using poppler.
+pub fn render_poppler(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocument, String> {
     let command = |input_path: &Path, dir: &Path| {
-        Command::new(env::var("XPDF_BIN").unwrap())
+        Command::new(env::var("POPPLER_BIN").unwrap())
             .arg("-r")
             .arg((72.0 * options.scale).to_string())
+            .arg("-png")
             .arg(&input_path)
-            .arg(&dir)
+            .arg(PathBuf::from(dir).join("out"))
             .output()
             .map_err(|e| format!("{}: {}", "failed to run renderer", e))
     };
