@@ -10,6 +10,6 @@
   "license": "ISC",
   "dependencies": {
     "pdfjs-dist": "^4.0.379",
-    "skia-canvas": "^1.0.1"
+    "skia-canvas": "^1.0.2"
   }
 }
