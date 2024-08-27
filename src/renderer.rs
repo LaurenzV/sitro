@@ -45,6 +45,7 @@ pub enum Renderer {
 }
 
 impl Renderer {
+    /// Get the name of the renderer.
     pub fn name(&self) -> String {
         match self {
             Renderer::Pdfium => "pdfium".to_string(),
