@@ -27,6 +27,7 @@ pub type RenderedDocument = Vec<RenderedPage>;
 
 /// A PDF backend used to render a PDF. Each backend calls a command-line
 /// utility in the background
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub enum Renderer {
     /// The pdfium renderer.
     Pdfium,
