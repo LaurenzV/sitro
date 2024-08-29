@@ -77,8 +77,6 @@ int main(int argc, const char * argv[]) {
             CGImageDestinationAddImage(destination, imageRef, nil);
             if (!CGImageDestinationFinalize(destination)) {
                 NSLog(@"Failed to write image to %@", outputPath);
-            } else {
-                NSLog(@"Converted page %zu of %@ to PNG format at %@", pageNum, pdfPath, outputPath);
             }
 
             CGContextRelease(context);
