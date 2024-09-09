@@ -27,7 +27,7 @@ pub type RenderedDocument = Vec<RenderedPage>;
 
 /// A PDF backend used to render a PDF. Each backend calls a command-line
 /// utility in the background
-#[derive(PartialEq, Eq)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub enum Renderer {
     /// The pdfium renderer.
     Pdfium,
@@ -194,6 +194,7 @@ pub fn render_mupdf(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocum
     let command = |input_path: &Path, dir: &Path| {
         Command::new(env::var("MUPDF_BIN").unwrap())
             .arg("draw")
+            .arg("-q")
             .arg("-r")
             .arg((72.0 * options.scale).to_string())
             .arg("-o")

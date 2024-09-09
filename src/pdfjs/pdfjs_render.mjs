@@ -50,7 +50,6 @@ async function renderPDF(pdfPath, outputRoot, scaleFactor) {
 
     try {
         const pdfDocument = await loadingTask.promise;
-        console.log(`# PDF document loaded with ${pdfDocument.numPages} pages.`);
 
         for (let pageNum = 1; pageNum <= pdfDocument.numPages; pageNum++) {
             const page = await pdfDocument.getPage(pageNum);
@@ -64,7 +63,6 @@ async function renderPDF(pdfPath, outputRoot, scaleFactor) {
             const image = await canvasAndContext.canvas.toBuffer();
             const outputPath = path.join(outputRoot, `page-${pageNum}.png`);
             fs.writeFileSync(outputPath, image);
-            console.log(`Page ${pageNum} rendered and saved as ${outputPath}`);
 
             page.cleanup();
         }
