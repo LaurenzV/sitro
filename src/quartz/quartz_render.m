@@ -39,21 +39,39 @@ int main(int argc, const char * argv[]) {
                 continue;
             }
 
-            CGRect pageRect = CGPDFPageGetBoxRect(page, kCGPDFMediaBox);
-            pageRect.size.width *= scaleFactor;
-            pageRect.size.height *= scaleFactor;
+            // Get the media box (full page area) of the current page
+            CGRect mediaBox = CGPDFPageGetBoxRect(page, kCGPDFMediaBox);
 
-            CGContextRef context = CGBitmapContextCreate(NULL, pageRect.size.width, pageRect.size.height, 8, 0, CGColorSpaceCreateDeviceRGB(), kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+            // Calculate the new page dimensions based on the scale factor
+            CGSize scaledSize = CGSizeMake(mediaBox.size.width * scaleFactor, mediaBox.size.height * scaleFactor);
+
+            // Create a bitmap context for rendering the page
+            CGContextRef context = CGBitmapContextCreate(NULL,
+                                                         scaledSize.width,
+                                                         scaledSize.height,
+                                                         8, // bits per component
+                                                         0, // automatic bytes per row
+                                                         CGColorSpaceCreateDeviceRGB(),
+                                                         kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
             if (!context) {
                 NSLog(@"Failed to create graphics context.");
                 continue;
             }
 
+            // Fill the background with white
             CGContextSetRGBFillColor(context, 1.0, 1.0, 1.0, 1.0);
-            CGContextFillRect(context, pageRect);
+            CGContextFillRect(context, CGRectMake(0, 0, scaledSize.width, scaledSize.height));
+
+            // Scale the context to the correct size
             CGContextScaleCTM(context, scaleFactor, scaleFactor);
+
+            // Translate the context so that the origin aligns with the media box
+            CGContextTranslateCTM(context, -mediaBox.origin.x, -mediaBox.origin.y);
+
+            // Render the PDF page into the context
             CGContextDrawPDFPage(context, page);
 
+            // Create a CGImage from the context
             CGImageRef imageRef = CGBitmapContextCreateImage(context);
             if (!imageRef) {
                 NSLog(@"Failed to create image from context.");
@@ -74,14 +92,18 @@ int main(int argc, const char * argv[]) {
                 continue;
             }
 
+            // Add the image to the destination and finalize the PNG file
             CGImageDestinationAddImage(destination, imageRef, nil);
             if (!CGImageDestinationFinalize(destination)) {
                 NSLog(@"Failed to write image to %@", outputPath);
             }
 
+            // Clean up
             CGContextRelease(context);
             CGImageRelease(imageRef);
         }
+
+        // Release the PDF document
         CGPDFDocumentRelease(pdf);
     }
     return 0;
