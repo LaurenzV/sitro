@@ -21,6 +21,7 @@ fn main() {
     ];
 
     let root_dir = Path::new("/Users/lstampfl/Programming/GitHub/typst/tests/store/pdf");
+    // let root_dir = Path::new("pdf");
 
     let files: Vec<_> = WalkDir::new(root_dir)
         .into_iter()
