@@ -11,17 +11,18 @@ fn main() {
     let _ = std::fs::remove_dir_all("test");
 
     let renderers: Vec<Renderer> = vec![
-        // Renderer::Mupdf,
+        Renderer::Mupdf,
         Renderer::Ghostscript,
         Renderer::Pdfium,
         // Renderer::Poppler,
         Renderer::Quartz,
+        Renderer::Hayro,
         // Renderer::Pdfjs,
         // Renderer::Pdfbox,
     ];
 
-    let root_dir = Path::new("/Users/lstampfl/Programming/GitHub/typst/tests/store/pdf");
-    // let root_dir = Path::new("pdf");
+    // let root_dir = Path::new("/Users/lstampfl/Programming/GitHub/typst/tests/store/pdf");
+    let root_dir = Path::new("pdf");
 
     let files: Vec<_> = WalkDir::new(root_dir)
         .into_iter()
@@ -42,7 +43,7 @@ fn main() {
                     renderer.name()
                 );
                 renderer
-                    .render_as_pixmap(&file, &RenderOptions { scale: 1.75 }, Some(1.0 / 50.0))
+                    .render_as_pixmap(&file, &RenderOptions { scale: 1.0 }, Some(1.0 / 50.0))
                     .unwrap()
             })
             .collect::<Vec<_>>();

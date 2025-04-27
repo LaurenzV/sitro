@@ -4,6 +4,8 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use std::{env, fs};
+use hayro_syntax::Data;
+use hayro_syntax::pdf::Pdf;
 use tempdir::TempDir;
 use tiny_skia::{Paint, PathBuilder, Pixmap, PixmapPaint, Stroke, Transform};
 
@@ -42,7 +44,8 @@ pub enum Renderer {
     /// The pdfbox renderer.
     Pdfbox,
     /// The ghostscript renderer.
-    Ghostscript
+    Ghostscript,
+    Hayro,
 }
 
 impl Renderer {
@@ -56,6 +59,7 @@ impl Renderer {
             Renderer::Pdfjs => "pdfjs".to_string(),
             Renderer::Pdfbox => "pdfbox".to_string(),
             Renderer::Ghostscript => "ghostscript".to_string(),
+            Renderer::Hayro => "hayro".to_string(),
         }
     }
 
@@ -68,6 +72,7 @@ impl Renderer {
             Renderer::Pdfjs => (48, 17, 207),
             Renderer::Pdfbox => (237, 38, 98),
             Renderer::Ghostscript => (235, 38, 218),
+            Renderer::Hayro => (57, 212, 116)
         }
     }
 
@@ -148,6 +153,7 @@ impl Renderer {
             Renderer::Pdfjs => render_pdfjs(buf, options),
             Renderer::Pdfbox => render_pdfbox(buf, options),
             Renderer::Ghostscript => render_ghostscript(buf, options),
+            Renderer::Hayro => render_hayro(buf, options),
         }
     }
 }
@@ -281,6 +287,13 @@ pub fn render_pdfbox(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocu
     let out_file_pattern = r"(?m)-(\d+).png";
 
     render_via_cli(buf, command, out_file_pattern)
+}
+
+/// Render a PDF file using hayro.
+pub fn render_hayro(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocument, String> {
+    let data = Data::new(buf);
+    let pdf = Pdf::new(&data).unwrap();
+    Ok(hayro_render::render_png(&pdf, options.scale))
 }
 
 fn render_via_cli<F>(buf: &[u8], command_fn: F, out_file_pattern: &str) -> Result<RenderedDocument, String>
