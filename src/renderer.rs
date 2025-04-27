@@ -1,11 +1,11 @@
+use hayro_syntax::pdf::Pdf;
+use hayro_syntax::Data;
 use std::cmp::min;
 use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use std::{env, fs};
-use hayro_syntax::Data;
-use hayro_syntax::pdf::Pdf;
 use tempdir::TempDir;
 use tiny_skia::{Paint, PathBuilder, Pixmap, PixmapPaint, Stroke, Transform};
 
@@ -72,7 +72,7 @@ impl Renderer {
             Renderer::Pdfjs => (48, 17, 207),
             Renderer::Pdfbox => (237, 38, 98),
             Renderer::Ghostscript => (235, 38, 218),
-            Renderer::Hayro => (57, 212, 116)
+            Renderer::Hayro => (57, 212, 116),
         }
     }
 
@@ -144,7 +144,11 @@ impl Renderer {
     }
 
     /// Render a PDF file as a sequence of PDF files, using the specified renderer.
-    pub fn render_as_png(&self, buf: &[u8], options: &RenderOptions) -> Result<RenderedDocument, String> {
+    pub fn render_as_png(
+        &self,
+        buf: &[u8],
+        options: &RenderOptions,
+    ) -> Result<RenderedDocument, String> {
         match self {
             Renderer::Pdfium => render_pdfium(buf, options),
             Renderer::Mupdf => render_mupdf(buf, options),
@@ -183,8 +187,11 @@ pub fn render_ghostscript(buf: &[u8], options: &RenderOptions) -> Result<Rendere
             .arg("-dTextAlphaBits=4")
             .arg("-sDEVICE=png16m")
             .arg("-dBATCH")
-            .arg(format!("-r{}",(72.0 * options.scale).to_string()))
-            .arg(format!("-sOutputFile={}", PathBuf::from(dir).join("out-%d.png").to_str().unwrap()))
+            .arg(format!("-r{}", (72.0 * options.scale).to_string()))
+            .arg(format!(
+                "-sOutputFile={}",
+                PathBuf::from(dir).join("out-%d.png").to_str().unwrap()
+            ))
             .arg(&input_path)
             .output()
             .map_err(|e| format!("{}: {}", "failed to run renderer", e))
@@ -296,7 +303,11 @@ pub fn render_hayro(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocum
     Ok(hayro_render::render_png(&pdf, options.scale))
 }
 
-fn render_via_cli<F>(buf: &[u8], command_fn: F, out_file_pattern: &str) -> Result<RenderedDocument, String>
+fn render_via_cli<F>(
+    buf: &[u8],
+    command_fn: F,
+    out_file_pattern: &str,
+) -> Result<RenderedDocument, String>
 where
     F: Fn(&Path, &Path) -> Result<Output, String>,
 {

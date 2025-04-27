@@ -78,9 +78,21 @@ fn main() {
             }
 
             let mut dir = PathBuf::from("test");
-            dir.push(pdf_path.parent().unwrap().file_name().unwrap().to_str().unwrap());
+            dir.push(
+                pdf_path
+                    .parent()
+                    .unwrap()
+                    .file_name()
+                    .unwrap()
+                    .to_str()
+                    .unwrap(),
+            );
             let mut path = dir.clone();
-            path.push(format!("{}-{}.png", pdf_path.file_stem().unwrap().to_str().unwrap(), i));
+            path.push(format!(
+                "{}-{}.png",
+                pdf_path.file_stem().unwrap().to_str().unwrap(),
+                i
+            ));
             let _ = std::fs::create_dir_all(dir);
             pixmap.save_png(&path).unwrap();
         }
