@@ -300,7 +300,7 @@ pub fn render_pdfbox(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocu
 pub fn render_hayro(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocument, String> {
     let data = Data::new(buf);
     let pdf = Pdf::new(&data).unwrap();
-    Ok(hayro_render::render_png(&pdf, options.scale))
+    Ok(hayro_render::render_png(&pdf, options.scale, None))
 }
 
 fn render_via_cli<F>(
