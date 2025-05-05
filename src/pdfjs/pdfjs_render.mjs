@@ -2,10 +2,11 @@
 
 import { strict as assert } from "assert";
 import pkg from 'skia-canvas';
-const { Canvas, DOMMatrix } = pkg;
+const { Canvas, DOMMatrix, Path2D } = pkg;
 global.DOMMatrix = DOMMatrix;
+global.Path2D = Path2D;
 
-import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
+import { getDocument } from "pdfjs-dist/build/pdf.mjs";
 import fs from "fs";
 import path from "path";
 
