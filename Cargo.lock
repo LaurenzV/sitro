@@ -114,7 +114,7 @@ version = "0.69.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9ffcebc3849946a7170a05992aac39da343a90676ab392c51a4280981d6379c2"
 dependencies = [
- "bitflags 2.4.1",
+ "bitflags 2.9.0",
  "cexpr",
  "clang-sys",
  "lazy_static",
@@ -145,9 +145,9 @@ checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "bitflags"
-version = "2.4.1"
+version = "2.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "327762f6e5a765692301e5bb513e0d9fef63be86bbc14528052b1cd3e6f03e07"
+checksum = "5c8214115b7bf84099f1309324e63141d4c5d7cc26862f97a0a857dbefe165bd"
 
 [[package]]
 name = "bitreader"
@@ -427,6 +427,13 @@ dependencies = [
 [[package]]
 name = "font-types"
 version = "0.8.4"
+dependencies = [
+ "bytemuck",
+]
+
+[[package]]
+name = "font-types"
+version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1fa6a5e5a77b5f3f7f9e32879f484aa5b3632ddfbe568a16266c904a6f32cdaf"
 dependencies = [
@@ -507,16 +514,17 @@ checksum = "bf151400ff0baff5465007dd2f3e717f3fe502074ca563069ce3a6629d07b289"
 name = "hayro-interpret"
 version = "0.1.0"
 dependencies = [
+ "bitflags 2.9.0",
  "hayro-syntax",
  "kurbo",
  "log",
  "once_cell",
+ "pdf-font-parser",
  "peniko",
  "phf",
  "qcms",
  "skrifa 0.30.0",
  "smallvec",
- "walkdir",
  "yoke",
 ]
 
@@ -528,9 +536,7 @@ dependencies = [
  "hayro-syntax",
  "image 0.25.6",
  "once_cell",
- "skrifa 0.30.0",
  "vello_api",
- "vello_common",
  "vello_cpu",
 ]
 
@@ -958,12 +964,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
 
 [[package]]
+name = "pdf-font-parser"
+version = "0.1.0"
+dependencies = [
+ "log",
+ "phf",
+]
+
+[[package]]
 name = "pdf-writer"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3ea27c5015ab81753fc61e49f8cde74999346605ee148bb20008ef3d3150e0dc"
 dependencies = [
- "bitflags 2.4.1",
+ "bitflags 2.9.0",
  "itoa",
  "memchr",
  "ryu",
@@ -984,7 +998,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "50d2f2669618a1ae68a86fe975fdda1c6a0b6dc9d5358ea8d2cdcd8da3307e5a"
 dependencies = [
  "bindgen",
- "bitflags 2.4.1",
+ "bitflags 2.9.0",
  "bytemuck",
  "bytes",
  "chrono",
@@ -1315,17 +1329,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f6f9e8a4f503e5c8750e4cd3b32a4e090035c46374b305a15c70bad833dca05f"
 dependencies = [
  "bytemuck",
- "font-types",
+ "font-types 0.8.4 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "read-fonts"
 version = "0.28.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "600e807b48ac55bad68a8cb75cc3c7739f139b9248f7e003e01e080f589b5288"
 dependencies = [
  "bytemuck",
- "font-types",
+ "font-types 0.8.4",
 ]
 
 [[package]]
@@ -1396,7 +1408,7 @@ version = "0.38.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72e572a5e8ca657d7366229cdde4bd14c4eb5499a9573d4d366fe1b599daa316"
 dependencies = [
- "bitflags 2.4.1",
+ "bitflags 2.9.0",
  "errno",
  "libc",
  "linux-raw-sys",
@@ -1508,8 +1520,6 @@ dependencies = [
 [[package]]
 name = "skrifa"
 version = "0.30.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6fa1e5622e4f7b98877e8a19890efddcac1230cec6198bd9de91ec0e00010dc8"
 dependencies = [
  "bytemuck",
  "read-fonts 0.28.0",
@@ -2078,7 +2088,7 @@ version = "0.39.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6f42320e61fe2cfd34354ecb597f86f413484a798ba44a8ca1165c58d42da6c1"
 dependencies = [
- "bitflags 2.4.1",
+ "bitflags 2.9.0",
 ]
 
 [[package]]

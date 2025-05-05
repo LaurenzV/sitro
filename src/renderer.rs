@@ -260,6 +260,7 @@ pub fn render_quartz(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocu
 pub fn render_pdfjs(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocument, String> {
     let command = |input_path: &Path, dir: &Path| {
         Command::new("node")
+            .arg("--import=./src/pdfjs/polyfills.mjs")
             .arg(env::var("PDFJS_BIN").unwrap())
             .arg(&input_path)
             .arg(&dir)
