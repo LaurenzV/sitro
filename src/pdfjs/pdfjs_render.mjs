@@ -5,7 +5,7 @@ import pkg from 'skia-canvas';
 const { Canvas, DOMMatrix } = pkg;
 global.DOMMatrix = DOMMatrix;
 
-import { getDocument } from "pdfjs-dist/build/pdf.mjs";
+import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
 import fs from "fs";
 import path from "path";
 
