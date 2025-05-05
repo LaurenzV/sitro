@@ -1,3 +1,5 @@
+use hayro_syntax::pdf::Pdf;
+use hayro_syntax::Data;
 use std::cmp::min;
 use std::fs::File;
 use std::io::Write;
@@ -42,7 +44,8 @@ pub enum Renderer {
     /// The pdfbox renderer.
     Pdfbox,
     /// The ghostscript renderer.
-    Ghostscript
+    Ghostscript,
+    Hayro,
 }
 
 impl Renderer {
@@ -56,6 +59,7 @@ impl Renderer {
             Renderer::Pdfjs => "pdfjs".to_string(),
             Renderer::Pdfbox => "pdfbox".to_string(),
             Renderer::Ghostscript => "ghostscript".to_string(),
+            Renderer::Hayro => "hayro".to_string(),
         }
     }
 
@@ -68,6 +72,7 @@ impl Renderer {
             Renderer::Pdfjs => (48, 17, 207),
             Renderer::Pdfbox => (237, 38, 98),
             Renderer::Ghostscript => (235, 38, 218),
+            Renderer::Hayro => (57, 212, 116),
         }
     }
 
@@ -139,7 +144,11 @@ impl Renderer {
     }
 
     /// Render a PDF file as a sequence of PDF files, using the specified renderer.
-    pub fn render_as_png(&self, buf: &[u8], options: &RenderOptions) -> Result<RenderedDocument, String> {
+    pub fn render_as_png(
+        &self,
+        buf: &[u8],
+        options: &RenderOptions,
+    ) -> Result<RenderedDocument, String> {
         match self {
             Renderer::Pdfium => render_pdfium(buf, options),
             Renderer::Mupdf => render_mupdf(buf, options),
@@ -148,6 +157,7 @@ impl Renderer {
             Renderer::Pdfjs => render_pdfjs(buf, options),
             Renderer::Pdfbox => render_pdfbox(buf, options),
             Renderer::Ghostscript => render_ghostscript(buf, options),
+            Renderer::Hayro => render_hayro(buf, options),
         }
     }
 }
@@ -177,8 +187,11 @@ pub fn render_ghostscript(buf: &[u8], options: &RenderOptions) -> Result<Rendere
             .arg("-dTextAlphaBits=4")
             .arg("-sDEVICE=png16m")
             .arg("-dBATCH")
-            .arg(format!("-r{}",(72.0 * options.scale).to_string()))
-            .arg(format!("-sOutputFile={}", PathBuf::from(dir).join("out-%d.png").to_str().unwrap()))
+            .arg(format!("-r{}", (72.0 * options.scale).to_string()))
+            .arg(format!(
+                "-sOutputFile={}",
+                PathBuf::from(dir).join("out-%d.png").to_str().unwrap()
+            ))
             .arg(&input_path)
             .output()
             .map_err(|e| format!("{}: {}", "failed to run renderer", e))
@@ -283,7 +296,18 @@ pub fn render_pdfbox(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocu
     render_via_cli(buf, command, out_file_pattern)
 }
 
-fn render_via_cli<F>(buf: &[u8], command_fn: F, out_file_pattern: &str) -> Result<RenderedDocument, String>
+/// Render a PDF file using hayro.
+pub fn render_hayro(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocument, String> {
+    let data = Data::new(buf);
+    let pdf = Pdf::new(&data).unwrap();
+    Ok(hayro_render::render_png(&pdf, options.scale))
+}
+
+fn render_via_cli<F>(
+    buf: &[u8],
+    command_fn: F,
+    out_file_pattern: &str,
+) -> Result<RenderedDocument, String>
 where
     F: Fn(&Path, &Path) -> Result<Output, String>,
 {

@@ -14,12 +14,14 @@ fn main() {
         Renderer::Mupdf,
         Renderer::Ghostscript,
         Renderer::Pdfium,
-        Renderer::Poppler,
+        // Renderer::Poppler,
         Renderer::Quartz,
-        Renderer::Pdfjs,
-        Renderer::Pdfbox,
+        Renderer::Hayro,
+        // Renderer::Pdfjs,
+        // Renderer::Pdfbox,
     ];
 
+    // let root_dir = Path::new("/Users/lstampfl/Programming/GitHub/typst/tests/store/pdf");
     let root_dir = Path::new("pdf");
 
     let files: Vec<_> = WalkDir::new(root_dir)
@@ -41,7 +43,7 @@ fn main() {
                     renderer.name()
                 );
                 renderer
-                    .render_as_pixmap(&file, &RenderOptions { scale: 1.75 }, Some(1.0 / 50.0))
+                    .render_as_pixmap(&file, &RenderOptions { scale: 1.0 }, Some(1.0 / 50.0))
                     .unwrap()
             })
             .collect::<Vec<_>>();
@@ -76,9 +78,21 @@ fn main() {
             }
 
             let mut dir = PathBuf::from("test");
-            dir.push(pdf_path.parent().unwrap());
+            dir.push(
+                pdf_path
+                    .parent()
+                    .unwrap()
+                    .file_name()
+                    .unwrap()
+                    .to_str()
+                    .unwrap(),
+            );
             let mut path = dir.clone();
-            path.push(format!("{}-{}.png", pdf_path.file_stem().unwrap().to_str().unwrap(), i));
+            path.push(format!(
+                "{}-{}.png",
+                pdf_path.file_stem().unwrap().to_str().unwrap(),
+                i
+            ));
             let _ = std::fs::create_dir_all(dir);
             pixmap.save_png(&path).unwrap();
         }

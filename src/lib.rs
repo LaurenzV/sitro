@@ -66,9 +66,7 @@ for anyone who has the exact need of rendering a PDF with different backends.
 */
 
 #![forbid(unsafe_code)]
-#![warn(missing_docs)]
 #![allow(dead_code)]
 
 mod renderer;
 pub use renderer::*;
-
