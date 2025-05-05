@@ -1,11 +1,6 @@
 // Adapted from: https://github.com/mozilla/pdf.js/blob/master/examples/node/pdf2png/pdf2png.mjs
 
 import { strict as assert } from "assert";
-import pkg from 'skia-canvas';
-const { Canvas, DOMMatrix, Path2D } = pkg;
-global.DOMMatrix = DOMMatrix;
-global.Path2D = Path2D;
-
 import { getDocument } from "pdfjs-dist/build/pdf.mjs";
 import fs from "fs";
 import path from "path";

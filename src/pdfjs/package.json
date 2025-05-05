@@ -9,7 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "pdfjs-dist": "^4.0.379",
+    "pdfjs-dist": "^5.2.133",
     "skia-canvas": "^1.0.2"
   }
 }
