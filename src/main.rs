@@ -12,13 +12,13 @@ fn main() {
 
     let renderers: Vec<Renderer> = vec![
         Renderer::Mupdf,
-        // Renderer::Ghostscript,
+        Renderer::Ghostscript,
         Renderer::Pdfium,
-        // Renderer::Poppler,
+        Renderer::Poppler,
         Renderer::Quartz,
-        Renderer::Hayro,
+        // Renderer::Hayro,
         // Renderer::Pdfjs,
-        // Renderer::Pdfbox,
+        Renderer::Pdfbox,
     ];
 
     // let root_dir = Path::new("/Users/lstampfl/Programming/GitHub/typst/tests/store/pdf");
