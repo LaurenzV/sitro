@@ -16,7 +16,7 @@ fn main() {
         Renderer::Pdfium,
         Renderer::Poppler,
         Renderer::Quartz,
-        // Renderer::Hayro,
+        Renderer::Hayro,
         // Renderer::Pdfjs,
         Renderer::Pdfbox,
     ];

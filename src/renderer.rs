@@ -1,11 +1,12 @@
 use hayro_syntax::pdf::Pdf;
-use hayro_syntax::Data;
 use std::cmp::min;
 use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
+use std::sync::Arc;
 use std::{env, fs};
+use hayro_render::{FontData, FontQuery, InterpreterSettings, StandardFont};
 use tempdir::TempDir;
 use tiny_skia::{Paint, PathBuilder, Pixmap, PixmapPaint, Stroke, Transform};
 
@@ -299,9 +300,15 @@ pub fn render_pdfbox(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocu
 
 /// Render a PDF file using hayro.
 pub fn render_hayro(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocument, String> {
-    let data = Data::new(buf);
-    let pdf = Pdf::new(&data).unwrap();
-    Ok(hayro_render::render_png(&pdf, options.scale, None))
+    let pdf = Pdf::new(Arc::new(buf.to_vec())).unwrap();
+    let settings = InterpreterSettings {
+        font_resolver: Arc::new(|query| match query {
+            FontQuery::Standard(s) => Some(get_standard(&s)),
+            FontQuery::Fallback(f) => Some(get_standard(&f.pick_standard_font())),
+        }),
+    };
+    
+    hayro_render::render_png(&pdf, options.scale, settings, None).ok_or("Failed to render document".to_string())
 }
 
 fn render_via_cli<F>(
@@ -349,4 +356,51 @@ where
     let out_files = out_files.iter().map(|e| fs::read(&e.1).unwrap()).collect();
 
     Ok(out_files)
+}
+
+fn get_standard(font: &StandardFont) -> FontData {
+    let data = match font {
+        StandardFont::Helvetica => {
+            &include_bytes!("../../hayro/assets/standard_fonts/LiberationSans-Regular.ttf")[..]
+        }
+        StandardFont::HelveticaBold => {
+            &include_bytes!("../../hayro/assets/standard_fonts/LiberationSans-Bold.ttf")[..]
+        }
+        StandardFont::HelveticaOblique => {
+            &include_bytes!("../../hayro/assets/standard_fonts/LiberationSans-Italic.ttf")[..]
+        }
+        StandardFont::HelveticaBoldOblique => {
+            &include_bytes!("../../hayro/assets/standard_fonts/LiberationSans-BoldItalic.ttf")[..]
+        }
+        StandardFont::Courier => {
+            &include_bytes!("../../hayro/assets/standard_fonts/LiberationMono-Regular.ttf")[..]
+        }
+        StandardFont::CourierBold => {
+            &include_bytes!("../../hayro/assets/standard_fonts/LiberationMono-Bold.ttf")[..]
+        }
+        StandardFont::CourierOblique => {
+            &include_bytes!("../../hayro/assets/standard_fonts/LiberationMono-Italic.ttf")[..]
+        }
+        StandardFont::CourierBoldOblique => {
+            &include_bytes!("../../hayro/assets/standard_fonts/LiberationMono-BoldItalic.ttf")[..]
+        }
+        StandardFont::TimesRoman => {
+            &include_bytes!("../../hayro/assets/standard_fonts/LiberationSerif-Regular.ttf")[..]
+        }
+        StandardFont::TimesBold => {
+            &include_bytes!("../../hayro/assets/standard_fonts/LiberationSerif-Bold.ttf")[..]
+        }
+        StandardFont::TimesItalic => {
+            &include_bytes!("../../hayro/assets/standard_fonts/LiberationSerif-Italic.ttf")[..]
+        }
+        StandardFont::TimesBoldItalic => {
+            &include_bytes!("../../hayro/assets/standard_fonts/LiberationSerif-BoldItalic.ttf")[..]
+        }
+        StandardFont::ZapfDingBats => {
+            &include_bytes!("../../hayro/assets/standard_fonts/FoxitDingbats.pfb")[..]
+        }
+        StandardFont::Symbol => &include_bytes!("../../hayro/assets/standard_fonts/FoxitSymbol.pfb")[..],
+    };
+
+    Arc::new(data)
 }
