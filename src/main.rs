@@ -12,13 +12,13 @@ fn main() {
 
     let renderers: Vec<Renderer> = vec![
         Renderer::Mupdf,
-        Renderer::Ghostscript,
-        Renderer::Pdfium,
-        Renderer::Poppler,
-        Renderer::Quartz,
+        // Renderer::Ghostscript,
+        // Renderer::Pdfium,
+        // Renderer::Poppler,
+        // Renderer::Quartz,
         Renderer::Hayro,
         // Renderer::Pdfjs,
-        Renderer::Pdfbox,
+        // Renderer::Pdfbox,
     ];
 
     // let root_dir = Path::new("/Users/lstampfl/Programming/GitHub/typst/tests/store/pdf");
@@ -43,7 +43,7 @@ fn main() {
                     renderer.name()
                 );
                 renderer
-                    .render_as_pixmap(&file, &RenderOptions { scale: 1.0 }, Some(1.0 / 50.0))
+                    .render_as_pixmap(&file, &RenderOptions { scale: 2.0 }, Some(1.0 / 50.0))
                     .unwrap()
             })
             .collect::<Vec<_>>();
