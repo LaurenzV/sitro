@@ -1,4 +1,4 @@
-use hayro_syntax::pdf::Pdf;
+use hayro_syntax::Pdf;
 use std::cmp::min;
 use std::fs::File;
 use std::io::Write;
@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use std::sync::Arc;
 use std::{env, fs};
-use hayro_render::{FontData, FontQuery, InterpreterSettings, StandardFont};
+use hayro::{FontData, FontQuery, InterpreterSettings, RenderSettings, StandardFont};
 use tempdir::TempDir;
 use tiny_skia::{Paint, PathBuilder, Pixmap, PixmapPaint, Stroke, Transform};
 
@@ -301,14 +301,22 @@ pub fn render_pdfbox(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocu
 /// Render a PDF file using hayro.
 pub fn render_hayro(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocument, String> {
     let pdf = Pdf::new(Arc::new(buf.to_vec())).unwrap();
-    let settings = InterpreterSettings {
+    let interpreter_settings = InterpreterSettings {
         font_resolver: Arc::new(|query| match query {
-            FontQuery::Standard(s) => Some(get_standard(&s)),
-            FontQuery::Fallback(f) => Some(get_standard(&f.pick_standard_font())),
+            FontQuery::Standard(s) => Some((get_standard(&s), 0)),
+            FontQuery::Fallback(f) => Some((get_standard(&f.pick_standard_font()), 0)),
         }),
+        warning_sink: Arc::new(|_| {}),
     };
     
-    hayro_render::render_png(&pdf, options.scale, settings, None).ok_or("Failed to render document".to_string())
+    let render_settings = RenderSettings {
+        x_scale: options.scale,
+        y_scale: options.scale,
+        width: None,
+        height: None,
+    };
+    
+    Ok(pdf.pages().iter().map(|page| hayro::render(page, &interpreter_settings, &render_settings).take_png()).collect::<Vec<_>>())
 }
 
 fn render_via_cli<F>(
