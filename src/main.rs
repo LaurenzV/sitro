@@ -43,7 +43,7 @@ fn main() {
                     renderer.name()
                 );
                 renderer
-                    .render_as_pixmap(&file, &RenderOptions { scale: 2.0 }, Some(1.0 / 50.0))
+                    .render_as_pixmap(&file, &RenderOptions { scale: 1.0 }, Some(1.0 / 50.0))
                     .unwrap()
             })
             .collect::<Vec<_>>();
