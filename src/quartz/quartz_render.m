@@ -4,16 +4,87 @@
 #import <ImageIO/ImageIO.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
+typedef struct {
+    size_t start;
+    size_t end;
+} PageRange;
+
+PageRange parsePageRange(const char* rangeStr, size_t totalPages) {
+    PageRange result = {0, 0};
+
+    if (!rangeStr) {
+        // Default: all pages (1-indexed)
+        result.start = 1;
+        result.end = totalPages;
+        return result;
+    }
+
+    NSString *range = [NSString stringWithUTF8String:rangeStr];
+
+    if ([range containsString:@"-"]) {
+        // Range format: "start-end"
+        NSArray *parts = [range componentsSeparatedByString:@"-"];
+        if ([parts count] != 2) {
+            NSLog(@"Invalid page range format, use start-end");
+            result.start = 0; // Invalid marker
+            return result;
+        }
+
+        NSInteger start = [[parts objectAtIndex:0] integerValue];
+        NSInteger end = [[parts objectAtIndex:1] integerValue];
+
+        if (start < 1 || end < 1) {
+            NSLog(@"Page numbers must be 1-indexed");
+            result.start = 0; // Invalid marker
+            return result;
+        }
+
+        if (start > totalPages || end > totalPages) {
+            NSLog(@"Page range exceeds document pages (1-%zu)", totalPages);
+            result.start = 0; // Invalid marker
+            return result;
+        }
+
+        if (start > end) {
+            NSLog(@"Start page must be <= end page");
+            result.start = 0; // Invalid marker
+            return result;
+        }
+
+        result.start = start;
+        result.end = end;
+    } else {
+        // Single page
+        NSInteger page = [range integerValue];
+        if (page < 1) {
+            NSLog(@"Page numbers must be 1-indexed");
+            result.start = 0; // Invalid marker
+            return result;
+        }
+        if (page > totalPages) {
+            NSLog(@"Page %ld exceeds document pages (1-%zu)", (long)page, totalPages);
+            result.start = 0; // Invalid marker
+            return result;
+        }
+        result.start = page;
+        result.end = page;
+    }
+
+    return result;
+}
+
 int main(int argc, const char * argv[]) {
     @autoreleasepool {
-        if (argc != 4) {
-            NSLog(@"Usage: PDFToPNG <path to PDF file> <output root directory> <scale factor>");
+        if (argc < 4 || argc > 5) {
+            NSLog(@"Usage: PDFToPNG <path to PDF file> <output root directory> <scale factor> [page range]");
+            NSLog(@"Page range examples: 3 (single page), 2-5 (pages 2 through 5)");
             return 1;
         }
 
         NSString *pdfPath = [NSString stringWithUTF8String:argv[1]];
         NSString *outputRoot = [NSString stringWithUTF8String:argv[2]];  // Root directory for output images
         float scaleFactor = atof(argv[3]);
+        const char *pageRangeStr = (argc == 5) ? argv[4] : NULL;
 
         // Ensure the output directory exists
         NSFileManager *fileManager = [NSFileManager defaultManager];
@@ -32,7 +103,15 @@ int main(int argc, const char * argv[]) {
 
         size_t numPages = CGPDFDocumentGetNumberOfPages(pdf);
 
-        for (size_t pageNum = 1; pageNum <= numPages; pageNum++) {
+        // Parse the page range
+        PageRange range = parsePageRange(pageRangeStr, numPages);
+        if (range.start == 0) {
+            // Invalid range, error already logged
+            CGPDFDocumentRelease(pdf);
+            return 1;
+        }
+
+        for (size_t pageNum = range.start; pageNum <= range.end; pageNum++) {
             CGPDFPageRef page = CGPDFDocumentGetPage(pdf, pageNum);
             if (!page) {
                 NSLog(@"Can't read page %zu.", pageNum);
