@@ -1,5 +1,3 @@
-// Adapted from: https://github.com/mozilla/pdf.js/blob/master/examples/node/pdf2png/pdf2png.mjs
-
 import { strict as assert } from "assert";
 import { getDocument } from "pdfjs-dist/build/pdf.mjs";
 import fs from "fs";
@@ -8,9 +6,7 @@ import path from "path";
 class NodeCanvasFactory {
     create(width, height) {
         assert(width > 0 && height > 0, "Invalid canvas size");
-
         const canvas = new Canvas(width, height);
-        canvas.gpu = false;
         const context = canvas.getContext("2d");
         return { canvas, context };
     }
@@ -35,7 +31,6 @@ const canvasFactory = new NodeCanvasFactory();
 
 async function renderPDF(pdfPath, outputRoot, scaleFactor) {
     const data = new Uint8Array(fs.readFileSync(pdfPath));
-
     const loadingTask = getDocument({
         data,
         cMapUrl: "node_modules/pdfjs-dist/cmaps/",
@@ -53,8 +48,7 @@ async function renderPDF(pdfPath, outputRoot, scaleFactor) {
             const canvasAndContext = canvasFactory.create(viewport.width, viewport.height);
             const renderContext = { canvasContext: canvasAndContext.context, viewport };
 
-            const renderTask = page.render(renderContext);
-            await renderTask.promise;
+            await page.render(renderContext).promise;
 
             const image = canvasAndContext.canvas.toBuffer('image/png');
             const outputPath = path.join(outputRoot, `page-${pageNum}.png`);
