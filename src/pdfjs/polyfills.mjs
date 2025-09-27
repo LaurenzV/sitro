@@ -1,13 +1,10 @@
-import pkg from 'skia-canvas';
-const { DOMMatrix, Path2D, Canvas, Image, ImageData, CanvasGradient, CanvasPattern, CanvasRenderingContext2D } = pkg;
+import { Canvas, Path2D, Image, ImageData, DOMMatrix } from '@napi-rs/canvas';
 
-globalThis.DOMMatrix = DOMMatrix;
-globalThis.Path2D = Path2D;
 globalThis.Canvas = Canvas;
+globalThis.Path2D = Path2D;
 globalThis.Image = Image;
 globalThis.ImageData = ImageData;
-globalThis.CanvasGradient = CanvasGradient;
-globalThis.CanvasPattern = CanvasPattern;
+globalThis.DOMMatrix = DOMMatrix;
 
 // Helper function to convert CanvasElement to proper Canvas
 function convertCanvasElement(image) {
@@ -42,44 +39,34 @@ function convertCanvasElement(image) {
   return image;
 }
 
-// Enhanced CanvasRenderingContext2D to handle PDF.js CanvasElement objects
-class EnhancedCanvasRenderingContext2D extends CanvasRenderingContext2D {
-  drawImage(image, ...args) {
-    const convertedImage = convertCanvasElement(image);
-    return super.drawImage(convertedImage, ...args);
-  }
+// Simple helper function since we're now using the same canvas library everywhere
+function ensurePath2D(path) {
+  if (!path || path instanceof Path2D) return path;
 
-  createPattern(image, repetition) {
-    const convertedImage = convertCanvasElement(image);
-    return super.createPattern(convertedImage, repetition);
-  }
-}
-
-globalThis.CanvasRenderingContext2D = EnhancedCanvasRenderingContext2D;
-
-// Also create a custom Canvas class that returns our enhanced context
-class EnhancedCanvas extends Canvas {
-  getContext(contextType, ...args) {
-    if (contextType === '2d') {
-      const ctx = super.getContext(contextType, ...args);
-      // Override the drawImage method on the returned context
-      const originalDrawImage = ctx.drawImage.bind(ctx);
-      const originalCreatePattern = ctx.createPattern.bind(ctx);
-
-      ctx.drawImage = function(image, ...drawArgs) {
-        const convertedImage = convertCanvasElement(image);
-        return originalDrawImage(convertedImage, ...drawArgs);
-      };
-
-      ctx.createPattern = function(image, repetition) {
-        const convertedImage = convertCanvasElement(image);
-        return originalCreatePattern(convertedImage, repetition);
-      };
-      return ctx;
+  // If it's an array (PDF.js path data), convert it
+  if (Array.isArray(path)) {
+    const newPath = new Path2D();
+    for (let i = 0; i < path.length;) {
+      const op = path[i++];
+      switch (op) {
+        case 0: // moveTo
+          newPath.moveTo(path[i++], path[i++]);
+          break;
+        case 1: // lineTo
+          newPath.lineTo(path[i++], path[i++]);
+          break;
+        case 2: // curveTo
+          newPath.bezierCurveTo(path[i++], path[i++], path[i++], path[i++], path[i++], path[i++]);
+          break;
+        case 3: // closePath
+          newPath.closePath();
+          break;
+      }
     }
-    return super.getContext(contextType, ...args);
+    return newPath;
   }
+
+  return path;
 }
 
-// Override the global Canvas
-globalThis.Canvas = EnhancedCanvas;
+// @napi-rs/canvas should work directly with PDF.js without additional polyfills

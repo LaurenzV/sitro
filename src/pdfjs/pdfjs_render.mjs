@@ -56,7 +56,7 @@ async function renderPDF(pdfPath, outputRoot, scaleFactor) {
             const renderTask = page.render(renderContext);
             await renderTask.promise;
 
-            const image = await canvasAndContext.canvas.toBuffer();
+            const image = canvasAndContext.canvas.toBuffer('image/png');
             const outputPath = path.join(outputRoot, `page-${pageNum}.png`);
             fs.writeFileSync(outputPath, image);
 
