@@ -11,14 +11,14 @@ fn main() {
     let _ = std::fs::remove_dir_all("test");
 
     let renderers: Vec<Renderer> = vec![
-        Renderer::Mupdf,
-        Renderer::Ghostscript,
-        Renderer::Pdfium,
-        Renderer::Poppler,
-        Renderer::Quartz,
-        Renderer::Hayro,
-        // Renderer::Pdfjs,
-        Renderer::Pdfbox,
+        // Renderer::Mupdf,
+        // Renderer::Ghostscript,
+        // Renderer::Pdfium,
+        // Renderer::Poppler,
+        // Renderer::Quartz,
+        // Renderer::Hayro,
+        Renderer::Pdfjs,
+        // Renderer::Pdfbox,
     ];
 
     // let root_dir = Path::new("/Users/lstampfl/Programming/GitHub/typst/tests/store/pdf");
@@ -30,7 +30,7 @@ fn main() {
         .filter(|e| e.file_type().is_file() && e.file_name().to_string_lossy().ends_with(".pdf"))
         .collect();
 
-    files.par_iter().for_each(|entry| {
+    files.iter().for_each(|entry| {
         let pdf_path = entry.path();
         let file = std::fs::read(pdf_path).unwrap();
 

@@ -20,7 +20,7 @@ for pdf_file in "$PDF_DIR"/*.pdf; do
         
         # Run mutool clean
         echo "Cleaning '$pdf_file' -> '$cleaned_file'"
-        mutool clean -gdia "$pdf_file" "$cleaned_file"
+        mutool clean -gida "$pdf_file" "$cleaned_file"
     fi
 done
 
