@@ -6,5 +6,5 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-image = "0.24.8"
-pdfium-render = "0.8.17"
+image = "0.25"
+pdfium-render = "0.8"

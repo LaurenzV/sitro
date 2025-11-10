@@ -1,6 +1,5 @@
 use image::ImageFormat;
-use pdfium_render::pdfium::Pdfium;
-use pdfium_render::prelude::PdfRenderConfig;
+use pdfium_render::prelude::{PdfRenderConfig, Pdfium};
 use std::io::Cursor;
 use std::path::Path;
 
