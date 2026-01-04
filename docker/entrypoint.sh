@@ -34,7 +34,7 @@ case "$BACKEND" in
             -sOutputFile="/work/out-%d.png" "$INPUT_PDF"
         ;;
     pdfbox)
-        java -jar /opt/bin/pdfbox.jar render -format png -i "$INPUT_PDF" -dpi "$DPI"
+        java -cp "/opt/pdfbox/*" org.apache.pdfbox.tools.PDFBox render -format png -i "$INPUT_PDF" -dpi "$DPI"
         for f in /work/file-*.png; do
             [ -f "$f" ] && mv "$f" "/work/out-$(basename "$f" | sed 's/file-\([0-9]*\)\.png/\1/').png"
         done

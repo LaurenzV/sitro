@@ -85,7 +85,11 @@ FROM base AS pdfbox-download
 RUN apt-get update && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
 RUN curl -L -o /tmp/pdfbox.jar \
-    "https://archive.apache.org/dist/pdfbox/3.0.6/pdfbox-app-3.0.6.jar"
+    "https://archive.apache.org/dist/pdfbox/3.0.6/pdfbox-app-3.0.6.jar" && \
+    curl -L -o /tmp/jai-imageio-core.jar \
+    "https://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-core/1.4.0/jai-imageio-core-1.4.0.jar" && \
+    curl -L -o /tmp/jai-imageio-jpeg2000.jar \
+    "https://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-jpeg2000/1.4.0/jai-imageio-jpeg2000-1.4.0.jar"
 
 FROM base AS final
 
@@ -104,7 +108,9 @@ COPY --from=ghostscript-build /build/ghostscript-10.06.0/bin/gs /opt/bin/gs
 COPY --from=ghostscript-build /build/ghostscript-10.06.0/Resource /opt/ghostscript/Resource
 COPY --from=ghostscript-build /build/ghostscript-10.06.0/iccprofiles /opt/ghostscript/iccprofiles
 COPY --from=pdfjs /opt/pdfjs /opt/pdfjs
-COPY --from=pdfbox-download /tmp/pdfbox.jar /opt/bin/pdfbox.jar
+COPY --from=pdfbox-download /tmp/pdfbox.jar /opt/pdfbox/pdfbox.jar
+COPY --from=pdfbox-download /tmp/jai-imageio-core.jar /opt/pdfbox/jai-imageio-core.jar
+COPY --from=pdfbox-download /tmp/jai-imageio-jpeg2000.jar /opt/pdfbox/jai-imageio-jpeg2000.jar
 
 RUN ldconfig
 
