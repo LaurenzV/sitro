@@ -13,6 +13,7 @@ A Rust library for rendering PDFs with multiple backends to compare output acros
 | pdfbox | Apache | Docker |
 | pdf.js | Firefox | Docker |
 | quartz | Apple Preview | macOS native |
+| hayro | - | native |
 
 ## Setup
 

@@ -1,8 +1,11 @@
+use hayro::vello_cpu::color::AlphaColor;
+use hayro::{InterpreterSettings, Pdf, RenderSettings};
 use std::cmp::min;
 use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::Arc;
 use std::{env, fs};
 use tempdir::TempDir;
 use tiny_skia::{Paint, PathBuilder, Pixmap, PixmapPaint, Stroke, Transform};
@@ -29,8 +32,8 @@ pub type RenderedPage = Vec<u8>;
 pub type RenderedDocument = Vec<RenderedPage>;
 
 /// A PDF backend used to render a PDF. Each backend calls a command-line
-/// utility in the background (via Docker), except for Quartz which runs
-/// natively on macOS.
+/// utility in the background (via Docker), except for Quartz and Hayro which
+/// run natively.
 #[derive(Copy, Clone, Eq, PartialEq)]
 #[non_exhaustive]
 pub enum Renderer {
@@ -49,6 +52,8 @@ pub enum Renderer {
     Pdfbox,
     /// The ghostscript renderer (via Docker).
     Ghostscript,
+    /// The hayro renderer (runs natively).
+    Hayro,
 }
 
 impl Renderer {
@@ -63,6 +68,7 @@ impl Renderer {
             Renderer::Pdfjs => "pdfjs".to_string(),
             Renderer::Pdfbox => "pdfbox".to_string(),
             Renderer::Ghostscript => "ghostscript".to_string(),
+            Renderer::Hayro => "hayro".to_string(),
         }
     }
 
@@ -76,6 +82,7 @@ impl Renderer {
             Renderer::Pdfjs => (48, 17, 207),
             Renderer::Pdfbox => (237, 38, 98),
             Renderer::Ghostscript => (235, 38, 218),
+            Renderer::Hayro => (57, 212, 116),
         }
     }
 
@@ -155,10 +162,34 @@ impl Renderer {
         match self {
             #[cfg(target_os = "macos")]
             Renderer::Quartz => quartz::render(buf, options),
+            Renderer::Hayro => render_hayro(buf, options),
             // All other backends run via Docker
             _ => render_via_docker(buf, &self.name(), options.scale),
         }
     }
+}
+
+/// Render a PDF file using hayro.
+fn render_hayro(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocument, String> {
+    let pdf = Pdf::new(Arc::new(buf.to_vec())).map_err(|e| format!("{:?}", e))?;
+    let interpreter_settings = InterpreterSettings::default();
+
+    let render_settings = RenderSettings {
+        x_scale: options.scale,
+        y_scale: options.scale,
+        width: None,
+        height: None,
+        bg_color: AlphaColor::WHITE,
+    };
+
+    pdf.pages()
+        .iter()
+        .map(|page| {
+            hayro::render(page, &interpreter_settings, &render_settings)
+                .into_png()
+                .map_err(|e| format!("{:?}", e))
+        })
+        .collect()
 }
 
 const DOCKER_IMAGE: &str = "vallaris/sitro-backends:latest";
