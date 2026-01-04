@@ -4,8 +4,6 @@ A Rust library for rendering PDFs with multiple backends to compare output acros
 
 ## Backends
 
-Sitro supports seven rendering backends:
-
 | Backend | Used by | Platform |
 |---------|---------|----------|
 | pdfium | Google Chrome | Docker |
@@ -18,12 +16,12 @@ Sitro supports seven rendering backends:
 
 ## Setup
 
-All you have to do is pull the docker image, the rest should happen automatically.
+Pull the Docker image:
 
 ```bash
-docker pull ghcr.io/laurenzv/sitro-backends:latest
+docker pull vallaris/sitro-backends
 ```
 
 ## Note
-Note that this crate has been built for personal purposes and has not been reviewed carefully (including for example
-the code for rendering via the Quartz framework). I don't recommend using this crate for production use cases.
+
+Note that this crate has been built for personal purposes and has not been reviewed carefully (including for example the code for rendering via the Quartz framework). I don't recommend using this crate for production use cases.

@@ -161,7 +161,7 @@ impl Renderer {
     }
 }
 
-const DOCKER_IMAGE: &str = "ghcr.io/laurenzv/sitro-backends:latest";
+const DOCKER_IMAGE: &str = "vallaris/sitro-backends:latest";
 
 /// Render a PDF using Docker container.
 fn render_via_docker(

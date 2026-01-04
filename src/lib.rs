@@ -18,7 +18,7 @@ Render PDFs with multiple backends to compare output across different PDF engine
 Pull the Docker image:
 
 ```bash
-docker pull ghcr.io/laurenzv/sitro-backends:latest
+docker pull vallaris/sitro-backends
 ```
 
 That's it. The Quartz backend runs natively on macOS with no additional setup.
