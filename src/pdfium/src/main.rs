@@ -5,7 +5,7 @@ use std::path::Path;
 
 fn main() -> Result<(), String> {
     let pdfium =
-        Pdfium::new( Pdfium::bind_to_system_library().map_err(|_| "failed to link to pdfium")?);
+        Pdfium::new(Pdfium::bind_to_system_library().map_err(|_| "failed to link to pdfium")?);
 
     let args: Vec<_> = std::env::args().collect();
     let input_path = Path::new(args.get(1).ok_or("input path missing")?);

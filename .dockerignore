@@ -1,0 +1,7 @@
+target/
+.git/
+.idea/
+test/
+pdf/
+*.pdf
+.DS_Store
