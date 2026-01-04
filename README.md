@@ -12,6 +12,7 @@ A Rust library for rendering PDFs with multiple backends to compare output acros
 | ghostscript | - | Docker |
 | pdfbox | Apache | Docker |
 | pdf.js | Firefox | Docker |
+| serenity | SerenityOS | Docker |
 | quartz | Apple Preview | macOS native |
 | hayro | - | native |
 

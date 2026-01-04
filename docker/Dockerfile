@@ -1,10 +1,10 @@
-FROM debian:bookworm-slim AS base
+FROM ubuntu:24.04 AS base
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     libfreetype6 \
-    libjpeg62-turbo \
-    libpng16-16 \
+    libjpeg62 \
+    libpng16-16t64 \
     libtiff6 \
     libopenjp2-7 \
     poppler-utils \
@@ -91,6 +91,37 @@ RUN curl -L -o /tmp/pdfbox.jar \
     curl -L -o /tmp/jai-imageio-jpeg2000.jar \
     "https://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-jpeg2000/1.4.0/jai-imageio-jpeg2000-1.4.0.jar"
 
+FROM ubuntu:24.04 AS lagom-build
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    curl \
+    git \
+    ninja-build \
+    pkg-config \
+    clang \
+    libgl1-mesa-dev \
+    libpulse-dev \
+    libssl-dev \
+    ca-certificates \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+RUN git clone --depth 1 https://github.com/LaurenzV/serenity.git
+
+WORKDIR /build/serenity/Build/lagom
+RUN cmake -GNinja -S /build/serenity/Meta/Lagom -B . \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_C_COMPILER=clang \
+    -DCMAKE_CXX_COMPILER=clang++ \
+    -DBUILD_LAGOM=ON \
+    -DBUILD_SHARED_LIBS=OFF \
+    -DENABLE_LAGOM_LIBWEB=OFF \
+    -DENABLE_LAGOM_LADYBIRD=OFF
+RUN ninja pdf
+
 FROM base AS final
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -111,6 +142,8 @@ COPY --from=pdfjs /opt/pdfjs /opt/pdfjs
 COPY --from=pdfbox-download /tmp/pdfbox.jar /opt/pdfbox/pdfbox.jar
 COPY --from=pdfbox-download /tmp/jai-imageio-core.jar /opt/pdfbox/jai-imageio-core.jar
 COPY --from=pdfbox-download /tmp/jai-imageio-jpeg2000.jar /opt/pdfbox/jai-imageio-jpeg2000.jar
+COPY --from=lagom-build /build/serenity/Build/lagom/bin/pdf /opt/bin/serenity-pdf
+COPY --from=lagom-build /build/serenity/Build/lagom/Root/res /opt/serenity/res
 
 RUN ldconfig
 

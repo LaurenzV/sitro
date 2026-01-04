@@ -54,6 +54,8 @@ pub enum Renderer {
     Ghostscript,
     /// The hayro renderer (runs natively).
     Hayro,
+    /// The serenity renderer (SerenityOS LibPDF, via Docker).
+    Serenity,
 }
 
 impl Renderer {
@@ -69,6 +71,7 @@ impl Renderer {
             Renderer::Pdfbox => "pdfbox".to_string(),
             Renderer::Ghostscript => "ghostscript".to_string(),
             Renderer::Hayro => "hayro".to_string(),
+            Renderer::Serenity => "serenity".to_string(),
         }
     }
 
@@ -83,6 +86,7 @@ impl Renderer {
             Renderer::Pdfbox => (237, 38, 98),
             Renderer::Ghostscript => (235, 38, 218),
             Renderer::Hayro => (57, 212, 116),
+            Renderer::Serenity => (148, 87, 235),
         }
     }
 

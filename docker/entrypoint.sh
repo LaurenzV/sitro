@@ -45,9 +45,18 @@ case "$BACKEND" in
             [ -f "$f" ] && mv "$f" "/work/out-$(basename "$f" | sed 's/page-\([0-9]*\)\.png/\1/').png"
         done
         ;;
+    serenity)
+        PAGE_COUNT=$(/opt/bin/serenity-pdf --json "$INPUT_PDF" 2>/dev/null | grep -o '"page_count":"[0-9]*"' | grep -o '[0-9]*')
+        if [ -z "$PAGE_COUNT" ]; then
+            PAGE_COUNT=1
+        fi
+        for i in $(seq 1 "$PAGE_COUNT"); do
+            /opt/bin/serenity-pdf --page "$i" --scale "$SCALE" --render "/work/out-${i}.png" "$INPUT_PDF"
+        done
+        ;;
     *)
         echo "Error: Unknown backend '$BACKEND'" >&2
-        echo "Backends: pdfium, mupdf, poppler, ghostscript, pdfbox, pdfjs" >&2
+        echo "Backends: pdfium, mupdf, poppler, ghostscript, pdfbox, pdfjs, serenity" >&2
         exit 1
         ;;
 esac

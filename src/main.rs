@@ -11,14 +11,15 @@ fn main() {
     let _ = std::fs::remove_dir_all("test");
 
     let renderers: Vec<Renderer> = vec![
-        // Renderer::Mupdf,
-        // Renderer::Ghostscript,
-        // Renderer::Pdfium,
-        // Renderer::Poppler,
-        // Renderer::Quartz,
-        // Renderer::Pdfjs,
+        Renderer::Mupdf,
+        Renderer::Ghostscript,
+        Renderer::Pdfium,
+        Renderer::Poppler,
+        Renderer::Quartz,
+        Renderer::Pdfjs,
         Renderer::Pdfbox,
         Renderer::Hayro,
+        Renderer::Serenity,
     ];
 
     // let root_dir = Path::new("/Users/lstampfl/Programming/GitHub/typst/tests/store/pdf");
