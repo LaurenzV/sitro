@@ -1,4 +1,4 @@
-use crate::renderer::{RenderOptions, Renderer};
+use crate::renderer::{Backend, RenderOptions, RENDERER};
 use rayon::iter::IntoParallelRefIterator;
 use rayon::iter::ParallelIterator;
 use std::path::{Path, PathBuf};
@@ -10,16 +10,16 @@ mod renderer;
 fn main() {
     let _ = std::fs::remove_dir_all("test");
 
-    let renderers: Vec<Renderer> = vec![
-        Renderer::Mupdf,
-        Renderer::Ghostscript,
-        Renderer::Pdfium,
-        Renderer::Poppler,
-        Renderer::Quartz,
-        Renderer::Pdfjs,
-        Renderer::Pdfbox,
-        Renderer::Hayro,
-        Renderer::Serenity,
+    let backends: Vec<Backend> = vec![
+        Backend::Mupdf,
+        Backend::Ghostscript,
+        Backend::Pdfium,
+        Backend::Poppler,
+        Backend::Quartz,
+        Backend::Pdfjs,
+        Backend::Pdfbox,
+        Backend::Hayro,
+        Backend::Serenity,
     ];
 
     // let root_dir = Path::new("/Users/lstampfl/Programming/GitHub/typst/tests/store/pdf");
@@ -31,23 +31,26 @@ fn main() {
         .filter(|e| e.file_type().is_file() && e.file_name().to_string_lossy().ends_with(".pdf"))
         .collect();
 
+    let options = RenderOptions { scale: 1.75 };
+
+    // Parallelize over files - each render gets a unique subdirectory
     files.par_iter().for_each(|entry| {
         let pdf_path = entry.path();
         let file = std::fs::read(pdf_path).unwrap();
 
-        let rendered_pages = renderers
-            .par_iter()
-            .map(|renderer| {
+        let rendered_pages: Vec<_> = backends
+            .iter()
+            .map(|backend| {
                 println!(
                     "rendering {} with {}",
                     pdf_path.to_string_lossy(),
-                    renderer.name()
+                    backend.name()
                 );
-                renderer
-                    .render_as_pixmap(&file, &RenderOptions { scale: 1.75 }, Some(1.0 / 50.0))
+                RENDERER
+                    .render_as_pixmap(backend, &file, &options, Some(1.0 / 50.0))
                     .unwrap()
             })
-            .collect::<Vec<_>>();
+            .collect();
 
         for i in 0..rendered_pages[0].len() {
             let width = rendered_pages
@@ -64,7 +67,7 @@ fn main() {
 
             let mut cursor = 0.0;
 
-            for j in 0..renderers.len() {
+            for j in 0..backends.len() {
                 let cur_pixmap = rendered_pages[j][i].as_ref();
                 pixmap.draw_pixmap(
                     0,

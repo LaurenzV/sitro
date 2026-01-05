@@ -11,7 +11,9 @@ Render PDFs with multiple backends to compare output across different PDF engine
 | ghostscript | - | Docker |
 | pdfbox | Apache | Docker |
 | pdf.js | Firefox | Docker |
+| serenity | SerenityOS | Docker |
 | quartz | Apple Preview | macOS native |
+| hayro | - | native |
 
 # Setup
 
@@ -21,16 +23,7 @@ Pull the Docker image:
 docker pull vallaris/sitro-backends
 ```
 
-That's it. The Quartz backend runs natively on macOS with no additional setup.
-
-# Usage
-
-```rust,ignore
-use sitro::{Renderer, RenderOptions};
-
-let pdf_bytes = std::fs::read("document.pdf")?;
-let options = RenderOptions { scale: 1.5 };
-let pages = Renderer::Pdfium.render_as_png(&pdf_bytes, &options)?;
+That's it. The Quartz and Hayro backends run natively with no additional setup.
 ```
 */
 
