@@ -1,4 +1,4 @@
-use crate::renderer::{Backend, RenderOptions, RENDERER};
+use crate::renderer::{Backend, RenderOptions, RENDER_INSTANCE};
 use rayon::iter::IntoParallelRefIterator;
 use rayon::iter::ParallelIterator;
 use std::path::{Path, PathBuf};
@@ -22,7 +22,6 @@ fn main() {
         Backend::Serenity,
     ];
 
-    // let root_dir = Path::new("/Users/lstampfl/Programming/GitHub/typst/tests/store/pdf");
     let root_dir = Path::new("pdf");
 
     let files: Vec<_> = WalkDir::new(root_dir)
@@ -30,10 +29,13 @@ fn main() {
         .filter_map(|e| e.ok())
         .filter(|e| e.file_type().is_file() && e.file_name().to_string_lossy().ends_with(".pdf"))
         .collect();
+    
+    let instance = RENDER_INSTANCE
+        .as_ref()
+        .unwrap();
 
     let options = RenderOptions { scale: 1.75 };
 
-    // Parallelize over files - each render gets a unique subdirectory
     files.par_iter().for_each(|entry| {
         let pdf_path = entry.path();
         let file = std::fs::read(pdf_path).unwrap();
@@ -46,7 +48,7 @@ fn main() {
                     pdf_path.to_string_lossy(),
                     backend.name()
                 );
-                RENDERER
+                instance
                     .render_as_pixmap(backend, &file, &options, Some(1.0 / 50.0))
                     .unwrap()
             })

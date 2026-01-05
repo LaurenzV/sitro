@@ -13,28 +13,19 @@ mod quartz;
 
 const DOCKER_IMAGE: &str = "vallaris/sitro-backends:latest";
 
-/// Global lazy-initialized Docker renderer instance.
-/// The container is automatically cleaned up when the process exits.
-pub static RENDERER: LazyLock<DockerRenderer> =
-    LazyLock::new(|| DockerRenderer::new().expect("Failed to start Docker container"));
+/// The global render instance.
+pub static RENDER_INSTANCE: LazyLock<Option<Renderer>> =
+    LazyLock::new(|| Renderer::new().ok());
 
-/// A persistent Docker container for rendering PDFs.
-///
-/// This struct manages a long-running Docker container that can be reused
-/// for multiple render operations, avoiding the overhead of starting a new
-/// container for each render call.
-///
-/// The container is automatically stopped when the process exits (the stdin
-/// pipe closes, causing `cat` to exit, and `--rm` removes the container).
-pub struct DockerRenderer {
+/// The renderer used to render PDFs with different backends.
+pub struct Renderer {
     container_id: String,
     work_dir: TempDir,
     #[allow(dead_code)]
     child: Child, // Kept alive to maintain stdin pipe; container dies when this drops
 }
 
-impl DockerRenderer {
-    /// Create a new DockerRenderer, starting a persistent Docker container.
+impl Renderer {
     fn new() -> Result<Self, String> {
         let docker_image =
             env::var("SITRO_DOCKER_IMAGE").unwrap_or_else(|_| DOCKER_IMAGE.to_string());
@@ -79,9 +70,6 @@ impl DockerRenderer {
     }
 
     /// Render a PDF using the specified backend.
-    ///
-    /// This method is thread-safe and can be called from multiple threads
-    /// in parallel - each render uses a unique subdirectory.
     pub fn render(
         &self,
         backend: &Backend,

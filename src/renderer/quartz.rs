@@ -1,5 +1,3 @@
-//! Native Quartz PDF rendering for macOS.
-
 #![allow(unsafe_code)]
 
 use crate::renderer::{RenderOptions, RenderedDocument, RenderedPage};
