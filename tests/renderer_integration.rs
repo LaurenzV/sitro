@@ -15,7 +15,12 @@ fn test_renderer(renderer: Renderer) {
         Ok(pages) => {
             assert!(!pages.is_empty(), "{} returned no pages", renderer.name());
             for (i, page) in pages.iter().enumerate() {
-                assert!(!page.is_empty(), "{} returned empty PNG for page {}", renderer.name(), i);
+                assert!(
+                    !page.is_empty(),
+                    "{} returned empty PNG for page {}",
+                    renderer.name(),
+                    i
+                );
                 assert!(
                     page.starts_with(&[0x89, 0x50, 0x4E, 0x47]),
                     "{} returned invalid PNG for page {} (bad magic bytes)",
@@ -23,7 +28,11 @@ fn test_renderer(renderer: Renderer) {
                     i
                 );
             }
-            println!("{} successfully rendered {} page(s)", renderer.name(), pages.len());
+            println!(
+                "{} successfully rendered {} page(s)",
+                renderer.name(),
+                pages.len()
+            );
         }
         Err(e) => panic!("{} failed: {}", renderer.name(), e),
     }
