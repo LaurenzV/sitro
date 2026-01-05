@@ -1,87 +1,81 @@
 //! Integration tests for PDF renderers.
-//!
-//! These tests verify that each renderer can successfully render a test PDF
-//! and produce non-empty PNG output.
 
-use sitro::{RenderOptions, Renderer};
+use sitro::{Backend, RenderOptions, RENDER_INSTANCE};
 
 const TEST_PDF: &[u8] = include_bytes!("../assets/font_cid_1.pdf");
 
-fn test_renderer(renderer: Renderer) {
+fn test_backend(backend: Backend) {
+    let renderer = RENDER_INSTANCE
+        .as_ref()
+        .expect("Failed to initialize renderer");
     let options = RenderOptions::default();
-    let result = renderer.render_as_png(TEST_PDF, &options);
+    let result = renderer.render(&backend, TEST_PDF, &options);
 
     match result {
         Ok(pages) => {
-            assert!(!pages.is_empty(), "{} returned no pages", renderer.name());
+            assert!(!pages.is_empty(), "{} returned no pages", backend.name());
             for (i, page) in pages.iter().enumerate() {
                 assert!(
                     !page.is_empty(),
                     "{} returned empty PNG for page {}",
-                    renderer.name(),
+                    backend.name(),
                     i
                 );
                 assert!(
                     page.starts_with(&[0x89, 0x50, 0x4E, 0x47]),
                     "{} returned invalid PNG for page {} (bad magic bytes)",
-                    renderer.name(),
+                    backend.name(),
                     i
                 );
             }
-            println!(
-                "{} successfully rendered {} page(s)",
-                renderer.name(),
-                pages.len()
-            );
+            println!("{} successfully rendered {} page(s)", backend.name(), pages.len());
         }
-        Err(e) => panic!("{} failed: {}", renderer.name(), e),
+        Err(e) => panic!("{} failed: {}", backend.name(), e),
     }
 }
 
-// Native renderers (no Docker required)
-
 #[test]
 fn test_hayro() {
-    test_renderer(Renderer::Hayro);
+    test_backend(Backend::Hayro);
 }
 
 #[test]
 #[cfg(target_os = "macos")]
 fn test_quartz() {
-    test_renderer(Renderer::Quartz);
+    test_backend(Backend::Quartz);
 }
 
 #[test]
 fn test_pdfium() {
-    test_renderer(Renderer::Pdfium);
+    test_backend(Backend::Pdfium);
 }
 
 #[test]
 fn test_mupdf() {
-    test_renderer(Renderer::Mupdf);
+    test_backend(Backend::Mupdf);
 }
 
 #[test]
 fn test_poppler() {
-    test_renderer(Renderer::Poppler);
+    test_backend(Backend::Poppler);
 }
 
 #[test]
 fn test_ghostscript() {
-    test_renderer(Renderer::Ghostscript);
+    test_backend(Backend::Ghostscript);
 }
 
 #[test]
 fn test_pdfbox() {
-    test_renderer(Renderer::Pdfbox);
+    test_backend(Backend::Pdfbox);
 }
 
 #[test]
 fn test_pdfjs() {
-    test_renderer(Renderer::Pdfjs);
+    test_backend(Backend::Pdfjs);
 }
 
 #[test]
 fn test_serenity() {
-    test_renderer(Renderer::Serenity);
+    test_backend(Backend::Serenity);
 }
