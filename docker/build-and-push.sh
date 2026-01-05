@@ -3,5 +3,9 @@ set -e
 
 IMAGE="vallaris/sitro-backends"
 
-docker build -t "$IMAGE:latest" -f docker/Dockerfile .
-docker push "$IMAGE:latest"
+docker buildx build \
+    --platform linux/amd64,linux/arm64 \
+    -t "$IMAGE:latest" \
+    -f docker/Dockerfile \
+    --push \
+    .

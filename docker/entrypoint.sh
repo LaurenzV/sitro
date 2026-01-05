@@ -3,17 +3,17 @@ set -e
 
 BACKEND="$1"
 SCALE="${2:-1.0}"
-INPUT_PDF="file.pdf"
-WORK_DIR="$(pwd)"
+WORK_DIR="${3:-$(pwd)}"
+INPUT_PDF="$WORK_DIR/file.pdf"
 
 if [ -z "$BACKEND" ]; then
-    echo "Usage: entrypoint.sh <backend> [scale]" >&2
+    echo "Usage: entrypoint.sh <backend> [scale] [workdir]" >&2
     echo "Backends: pdfium, mupdf, poppler, ghostscript, pdfbox, pdfjs, serenity" >&2
     exit 1
 fi
 
 if [ ! -f "$INPUT_PDF" ]; then
-    echo "Error: Input PDF not found at $WORK_DIR/$INPUT_PDF" >&2
+    echo "Error: Input PDF not found at $INPUT_PDF" >&2
     exit 1
 fi
 
@@ -41,7 +41,7 @@ case "$BACKEND" in
         done
         ;;
     pdfjs)
-        node /opt/pdfjs/pdfjs_render.mjs "$WORK_DIR/$INPUT_PDF" "$WORK_DIR" "$SCALE"
+        node /opt/pdfjs/pdfjs_render.mjs "$INPUT_PDF" "$WORK_DIR" "$SCALE"
         for f in "$WORK_DIR"/page-*.png; do
             [ -f "$f" ] && mv "$f" "$WORK_DIR/out-$(basename "$f" | sed 's/page-\([0-9]*\)\.png/\1/').png"
         done
