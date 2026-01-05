@@ -13,6 +13,7 @@ rayon = "1.8.1"
 regex = "1.10.2"
 tempdir = "0.3.7"
 tiny-skia = "0.11.4"
+uuid = { version = "1", features = ["v4"] }
 walkdir = "2.4.0"
 hayro = { git = "https://github.com/LaurenzV/hayro.git", rev = "6c843cf5c20516a7ee9829e4b8202db392f8bd55", features = ["embed-fonts"] }
 

@@ -3,16 +3,17 @@ set -e
 
 BACKEND="$1"
 SCALE="${2:-1.0}"
-INPUT_PDF="/work/file.pdf"
+INPUT_PDF="file.pdf"
+WORK_DIR="$(pwd)"
 
 if [ -z "$BACKEND" ]; then
     echo "Usage: entrypoint.sh <backend> [scale]" >&2
-    echo "Backends: pdfium, mupdf, poppler, ghostscript, pdfbox, pdfjs" >&2
+    echo "Backends: pdfium, mupdf, poppler, ghostscript, pdfbox, pdfjs, serenity" >&2
     exit 1
 fi
 
 if [ ! -f "$INPUT_PDF" ]; then
-    echo "Error: Input PDF not found at $INPUT_PDF" >&2
+    echo "Error: Input PDF not found at $WORK_DIR/$INPUT_PDF" >&2
     exit 1
 fi
 
@@ -20,29 +21,29 @@ DPI=$(awk "BEGIN {printf \"%.0f\", $SCALE * 72}")
 
 case "$BACKEND" in
     pdfium)
-        /opt/bin/pdfium "$INPUT_PDF" "/work/out-%d.png" "$SCALE"
+        /opt/bin/pdfium "$INPUT_PDF" "$WORK_DIR/out-%d.png" "$SCALE"
         ;;
     mupdf)
-        /opt/bin/mutool draw -q -r "$DPI" -o "/work/out-%d.png" "$INPUT_PDF"
+        /opt/bin/mutool draw -q -r "$DPI" -o "$WORK_DIR/out-%d.png" "$INPUT_PDF"
         ;;
     poppler)
-        pdftoppm -r "$DPI" -png "$INPUT_PDF" "/work/out"
+        pdftoppm -r "$DPI" -png "$INPUT_PDF" "$WORK_DIR/out"
         ;;
     ghostscript)
         /opt/bin/gs -dNOPAUSE -dBATCH -sDEVICE=png16m \
             -dGraphicsAlphaBits=4 -dTextAlphaBits=4 -r"$DPI" \
-            -sOutputFile="/work/out-%d.png" "$INPUT_PDF"
+            -sOutputFile="$WORK_DIR/out-%d.png" "$INPUT_PDF"
         ;;
     pdfbox)
         java -cp "/opt/pdfbox/*" org.apache.pdfbox.tools.PDFBox render -format png -i "$INPUT_PDF" -dpi "$DPI"
-        for f in /work/file-*.png; do
-            [ -f "$f" ] && mv "$f" "/work/out-$(basename "$f" | sed 's/file-\([0-9]*\)\.png/\1/').png"
+        for f in "$WORK_DIR"/file-*.png; do
+            [ -f "$f" ] && mv "$f" "$WORK_DIR/out-$(basename "$f" | sed 's/file-\([0-9]*\)\.png/\1/').png"
         done
         ;;
     pdfjs)
-        cd /opt/pdfjs && node pdfjs_render.mjs "$INPUT_PDF" "/work" "$SCALE"
-        for f in /work/page-*.png; do
-            [ -f "$f" ] && mv "$f" "/work/out-$(basename "$f" | sed 's/page-\([0-9]*\)\.png/\1/').png"
+        node /opt/pdfjs/pdfjs_render.mjs "$WORK_DIR/$INPUT_PDF" "$WORK_DIR" "$SCALE"
+        for f in "$WORK_DIR"/page-*.png; do
+            [ -f "$f" ] && mv "$f" "$WORK_DIR/out-$(basename "$f" | sed 's/page-\([0-9]*\)\.png/\1/').png"
         done
         ;;
     serenity)
@@ -51,7 +52,7 @@ case "$BACKEND" in
             PAGE_COUNT=1
         fi
         for i in $(seq 1 "$PAGE_COUNT"); do
-            /opt/bin/serenity-pdf --page "$i" --scale "$SCALE" --render "/work/out-${i}.png" "$INPUT_PDF"
+            /opt/bin/serenity-pdf --page "$i" --scale "$SCALE" --render "$WORK_DIR/out-${i}.png" "$INPUT_PDF"
         done
         ;;
     *)
