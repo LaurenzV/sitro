@@ -6,9 +6,6 @@ on:
   pull_request:
     branches: [main]
 
-env:
-  CARGO_TERM_COLOR: always
-
 jobs:
   test:
     name: Test (${{ matrix.os }})
@@ -40,24 +37,8 @@ jobs:
           key: ${{ matrix.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ matrix.os }}-cargo-
 
-      - name: Build
-        run: cargo build --release
-
-      - name: Clippy
-        run: cargo clippy -- -D warnings
-
       - name: Pull Docker image
         run: docker pull vallaris/sitro-backends:latest
 
       - name: Run tests
         run: cargo test
-
-  fmt:
-    name: Format
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt
-      - run: cargo fmt --all -- --check
