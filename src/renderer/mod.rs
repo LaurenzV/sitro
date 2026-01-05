@@ -77,8 +77,12 @@ impl Renderer {
     ) -> Result<RenderedDocument, String> {
         // For native backends, handle directly without Docker
         match backend {
-            #[cfg(target_os = "macos")]
-            Backend::Quartz => return quartz::render(buf, options),
+            Backend::Quartz => {
+                #[cfg(target_os = "macos")]
+                return quartz::render(buf, options);
+                #[cfg(not(target_os = "macos"))]
+                panic!("Quartz backend is only available on macOS");
+            }
             Backend::Hayro => return render_hayro(buf, options),
             _ => {}
         }
@@ -159,8 +163,7 @@ pub enum Backend {
     Mupdf,
     /// The poppler backend (via Docker).
     Poppler,
-    /// The quartz backend (macOS only, runs natively).
-    #[cfg(target_os = "macos")]
+    /// The quartz backend (macOS only, runs natively). Panics on non-macOS.
     Quartz,
     /// The pdf.js backend (via Docker).
     Pdfjs,
@@ -181,7 +184,6 @@ impl Backend {
             Backend::Pdfium => "pdfium".to_string(),
             Backend::Mupdf => "mupdf".to_string(),
             Backend::Poppler => "poppler".to_string(),
-            #[cfg(target_os = "macos")]
             Backend::Quartz => "quartz".to_string(),
             Backend::Pdfjs => "pdfjs".to_string(),
             Backend::Pdfbox => "pdfbox".to_string(),
@@ -196,7 +198,6 @@ impl Backend {
             Backend::Pdfium => (79, 184, 35),
             Backend::Mupdf => (34, 186, 184),
             Backend::Poppler => (227, 137, 20),
-            #[cfg(target_os = "macos")]
             Backend::Quartz => (234, 250, 60),
             Backend::Pdfjs => (48, 17, 207),
             Backend::Pdfbox => (237, 38, 98),
