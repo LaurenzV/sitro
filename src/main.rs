@@ -15,6 +15,7 @@ fn main() {
         Backend::Ghostscript,
         Backend::Pdfium,
         Backend::Poppler,
+        #[cfg(target_os = "macos")]
         Backend::Quartz,
         Backend::Pdfjs,
         Backend::Pdfbox,
