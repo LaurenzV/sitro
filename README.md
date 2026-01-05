@@ -18,11 +18,13 @@ A Rust library for rendering PDFs with multiple backends to compare output acros
 
 ## Setup
 
-Pull the Docker image:
+All you need to do is pull this docker image:
 
 ```bash
 docker pull vallaris/sitro-backends
 ```
+
+That's it. When accessing the global render instance, sitro will automatically spawn a Docker container that contains the utilities necessary for rendering the PDFs with the given backend.
 
 ## Note
 
