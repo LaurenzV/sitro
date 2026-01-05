@@ -29,10 +29,8 @@ fn main() {
         .filter_map(|e| e.ok())
         .filter(|e| e.file_type().is_file() && e.file_name().to_string_lossy().ends_with(".pdf"))
         .collect();
-    
-    let instance = RENDER_INSTANCE
-        .as_ref()
-        .unwrap();
+
+    let instance = RENDER_INSTANCE.as_ref().unwrap();
 
     let options = RenderOptions { scale: 1.75 };
 

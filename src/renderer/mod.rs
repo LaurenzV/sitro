@@ -14,8 +14,7 @@ mod quartz;
 const DOCKER_IMAGE: &str = "vallaris/sitro-backends:latest";
 
 /// The global render instance.
-pub static RENDER_INSTANCE: LazyLock<Option<Renderer>> =
-    LazyLock::new(|| Renderer::new().ok());
+pub static RENDER_INSTANCE: LazyLock<Option<Renderer>> = LazyLock::new(|| Renderer::new().ok());
 
 /// The renderer used to render PDFs with different backends.
 pub struct Renderer {
