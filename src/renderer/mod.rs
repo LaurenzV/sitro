@@ -93,16 +93,11 @@ impl Renderer {
 
         // Execute render command
         let output = Command::new("docker")
+            .args(["exec", &self.container_id, "/opt/bin/entrypoint.sh"])
             .args([
-                "exec",
-                "-w",
-                &format!("/work/{render_id}"),
-                &self.container_id,
-            ])
-            .args([
-                "/opt/bin/entrypoint.sh",
                 &backend.name(),
                 &options.scale.to_string(),
+                &format!("/work/{render_id}"),
             ])
             .output()
             .map_err(|e| format!("docker exec failed: {e}"))?;

@@ -28,7 +28,11 @@ fn test_backend(backend: Backend) {
                     i
                 );
             }
-            println!("{} successfully rendered {} page(s)", backend.name(), pages.len());
+            println!(
+                "{} successfully rendered {} page(s)",
+                backend.name(),
+                pages.len()
+            );
         }
         Err(e) => panic!("{} failed: {}", backend.name(), e),
     }
