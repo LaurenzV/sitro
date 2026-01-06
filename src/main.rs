@@ -40,7 +40,7 @@ fn main() {
         let file = std::fs::read(pdf_path).unwrap();
 
         let rendered_pages: Vec<_> = backends
-            .iter()
+            .par_iter()
             .map(|backend| {
                 println!(
                     "rendering {} with {}",
