@@ -6,6 +6,10 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+default = ["hayro"]
+hayro = ["dep:hayro"]
+
 [dependencies]
 image = {version = "0.24.7", features = ["png"]}
 imagesize = "0.12.0"
@@ -15,7 +19,7 @@ tempdir = "0.3.7"
 tiny-skia = "0.11.4"
 uuid = { version = "1", features = ["v4"] }
 walkdir = "2.4.0"
-hayro = { git = "https://github.com/LaurenzV/hayro.git", rev = "6c843cf5c20516a7ee9829e4b8202db392f8bd55", features = ["embed-fonts"] }
+hayro = { git = "https://github.com/LaurenzV/hayro.git", rev = "6c843cf5c20516a7ee9829e4b8202db392f8bd55", features = ["embed-fonts"], optional = true }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 core-graphics = "0.24"
