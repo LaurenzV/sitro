@@ -1,9 +1,13 @@
+#[cfg(feature = "hayro")]
 use hayro::vello_cpu::color::AlphaColor;
+#[cfg(feature = "hayro")]
 use hayro::{InterpreterSettings, Pdf, RenderSettings};
 use std::cmp::min;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
-use std::sync::{Arc, LazyLock};
+#[cfg(feature = "hayro")]
+use std::sync::Arc;
+use std::sync::LazyLock;
 use std::{env, fs};
 use tempdir::TempDir;
 use tiny_skia::{Paint, PathBuilder, Pixmap, PixmapPaint, Stroke, Transform};
@@ -83,7 +87,10 @@ impl Renderer {
                 #[cfg(not(target_os = "macos"))]
                 panic!("Quartz backend is only available on macOS");
             }
+            #[cfg(feature = "hayro")]
             Backend::Hayro => return render_hayro(buf, options),
+            #[cfg(not(feature = "hayro"))]
+            Backend::Hayro => panic!("Hayro backend requires the 'hayro' feature"),
             _ => {}
         }
 
@@ -275,6 +282,7 @@ fn render_pages_to_pixmaps(
 }
 
 /// Render a PDF file using hayro.
+#[cfg(feature = "hayro")]
 fn render_hayro(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocument, String> {
     let pdf = Pdf::new(Arc::new(buf.to_vec())).map_err(|e| format!("{:?}", e))?;
     let interpreter_settings = InterpreterSettings::default();

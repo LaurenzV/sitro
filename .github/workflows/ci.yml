@@ -37,6 +37,12 @@ jobs:
           key: ${{ matrix.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ matrix.os }}-cargo-
 
+      - name: Check (default features)
+        run: cargo check
+
+      - name: Check (no default features)
+        run: cargo check --no-default-features
+
       - name: Pull Docker image
         run: docker pull vallaris/sitro-backends:latest
 
