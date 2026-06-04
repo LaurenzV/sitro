@@ -1,7 +1,7 @@
 #[cfg(feature = "hayro")]
 use hayro::vello_cpu::color::AlphaColor;
 #[cfg(feature = "hayro")]
-use hayro::{InterpreterSettings, Pdf, RenderSettings};
+use hayro::{RenderSettings};
 use std::cmp::min;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
@@ -9,6 +9,9 @@ use std::process::{Child, Command, Stdio};
 use std::sync::Arc;
 use std::sync::LazyLock;
 use std::{env, fs};
+use hayro::hayro_interpret::InterpreterSettings;
+use hayro::hayro_syntax::Pdf;
+use hayro::RenderCache;
 use tempdir::TempDir;
 use tiny_skia::{Paint, PathBuilder, Pixmap, PixmapPaint, Stroke, Transform};
 
@@ -294,11 +297,12 @@ fn render_hayro(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocument,
         height: None,
         bg_color: AlphaColor::WHITE,
     };
+    let cache = RenderCache::new();
 
     pdf.pages()
         .iter()
         .map(|page| {
-            hayro::render(page, &interpreter_settings, &render_settings)
+            hayro::render(page, &cache, &interpreter_settings, &render_settings)
                 .into_png()
                 .map_err(|e| format!("{:?}", e))
         })
