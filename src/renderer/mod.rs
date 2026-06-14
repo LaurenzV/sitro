@@ -9,8 +9,11 @@ use std::process::{Child, Command, Stdio};
 use std::sync::Arc;
 use std::sync::LazyLock;
 use std::{env, fs};
+#[cfg(feature = "hayro")]
 use hayro::hayro_interpret::InterpreterSettings;
+#[cfg(feature = "hayro")]
 use hayro::hayro_syntax::Pdf;
+#[cfg(feature = "hayro")]
 use hayro::RenderCache;
 use tempdir::TempDir;
 use tiny_skia::{Paint, PathBuilder, Pixmap, PixmapPaint, Stroke, Transform};
