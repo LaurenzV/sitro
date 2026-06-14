@@ -33,7 +33,7 @@ fn main() {
 
     let instance = RENDER_INSTANCE.as_ref().unwrap();
 
-    let options = RenderOptions { scale: 1.75 };
+    let options = RenderOptions { scale: 1.0 };
 
     files.par_iter().for_each(|entry| {
         let pdf_path = entry.path();
