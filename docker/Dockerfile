@@ -97,15 +97,11 @@ RUN curl -L -o mupdf.tar.gz \
 WORKDIR /build/mupdf-1.28.0-source
 RUN make HAVE_X11=no HAVE_GLUT=no -j$(nproc)
 
-FROM base AS ghostscript-build
+FROM --platform=$BUILDPLATFORM ubuntu:26.04 AS ghostscript-source
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
+    ca-certificates \
     curl \
-    libfreetype6-dev \
-    libjpeg-dev \
-    libpng-dev \
-    libtiff-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
@@ -113,6 +109,18 @@ RUN curl -L -o gs.tar.gz \
     "https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs10071/ghostscript-10.07.1.tar.gz" \
     && tar -xzf gs.tar.gz \
     && rm gs.tar.gz
+
+FROM base AS ghostscript-build
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libfreetype6-dev \
+    libjpeg-dev \
+    libpng-dev \
+    libtiff-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=ghostscript-source /build/ghostscript-10.07.1 /build/ghostscript-10.07.1
 
 WORKDIR /build/ghostscript-10.07.1
 RUN ./configure && make -j$(nproc)
