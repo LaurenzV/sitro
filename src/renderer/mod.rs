@@ -25,7 +25,7 @@ use tiny_skia::{Paint, PathBuilder, Pixmap, PixmapPaint, Stroke, Transform};
 #[cfg(target_os = "macos")]
 mod quartz;
 
-const DOCKER_IMAGE: &str = "vallaris/sitro-backends:latest";
+const DOCKER_IMAGE: &str = concat!("vallaris/sitro-backends:", env!("CARGO_PKG_VERSION"));
 const DOCKER_START_TIMEOUT: Duration = Duration::from_secs(10);
 const DOCKER_POLL_INTERVAL: Duration = Duration::from_millis(100);
 
@@ -44,6 +44,7 @@ impl Renderer {
     fn new() -> Result<Self, String> {
         let docker_image =
             env::var("SITRO_DOCKER_IMAGE").unwrap_or_else(|_| DOCKER_IMAGE.to_string());
+        ensure_docker_image(&docker_image)?;
         let work_dir = TempDir::new("sitro").map_err(|e| e.to_string())?;
 
         // Start container attached to stdin - when our process dies, stdin closes,
@@ -181,6 +182,34 @@ impl Renderer {
     ) -> Result<Vec<Pixmap>, String> {
         let pages = self.render(backend, buf, options)?;
         render_pages_to_pixmaps(&pages, backend.color(), border_width)
+    }
+}
+
+fn ensure_docker_image(docker_image: &str) -> Result<(), String> {
+    let inspect = Command::new("docker")
+        .args(["image", "inspect", docker_image])
+        .output()
+        .map_err(|e| format!("failed to inspect Docker image: {e}"))?;
+
+    if inspect.status.success() {
+        return Ok(());
+    }
+
+    let pull = Command::new("docker")
+        .args(["pull", docker_image])
+        .output()
+        .map_err(|e| format!("failed to pull Docker image: {e}"))?;
+
+    if pull.status.success() {
+        Ok(())
+    } else {
+        let error = String::from_utf8_lossy(&pull.stderr);
+        let error = error.trim();
+        Err(if error.is_empty() {
+            format!("failed to pull Docker image: {}", pull.status)
+        } else {
+            format!("failed to pull Docker image: {error}")
+        })
     }
 }
 

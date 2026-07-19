@@ -18,13 +18,27 @@ A Rust library for rendering PDFs with multiple backends to compare output acros
 
 ## Setup
 
-All you need to do is pull this docker image:
+Docker must be installed and running. Sitro automatically uses the Docker image tagged with the same version as the crate and pulls it when it is not available locally.
 
-```bash
-docker pull vallaris/sitro-backends
+The image name is:
+
+```text
+vallaris/sitro-backends:<crate-version>
 ```
 
 That's it. When accessing the global render instance, sitro will automatically spawn a Docker container that contains the utilities necessary for rendering the PDFs with the given backend.
+
+Set `SITRO_DOCKER_IMAGE` to override the image, for example when testing a local build.
+
+## Publishing the Docker image
+
+Update `version` in `Cargo.toml`, then run:
+
+```bash
+./docker/build-and-push.sh
+```
+
+The script publishes multi-platform Docker images tagged with both the crate version and `latest`. Dependencies that link to the corresponding Git commit automatically use the versioned image. Version tags must not contain SemVer build metadata (`+...`) because `+` is not valid in a Docker tag.
 
 ## Note
 
