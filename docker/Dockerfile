@@ -1,4 +1,4 @@
-FROM ubuntu:24.04 AS base
+FROM ubuntu:26.04 AS base
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
@@ -7,7 +7,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpng16-16t64 \
     libtiff6 \
     libopenjp2-7 \
-    poppler-utils \
+    libfontconfig1 \
+    liblcms2-2 \
+    poppler-data \
     && rm -rf /var/lib/apt/lists/*
 
 FROM rust:latest AS rust-build
@@ -19,7 +21,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 ARG TARGETARCH
 RUN PDFIUM_ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "arm64" || echo "x64") && \
     curl -L -o /tmp/pdfium.tgz \
-    "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F7520/pdfium-linux-${PDFIUM_ARCH}.tgz" && \
+    "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F7947/pdfium-linux-${PDFIUM_ARCH}.tgz" && \
     mkdir -p /opt/pdfium && \
     tar -xzf /tmp/pdfium.tgz -C /opt/pdfium && \
     rm /tmp/pdfium.tgz
@@ -32,6 +34,48 @@ COPY src/pdfium/src ./src
 
 RUN cp /opt/pdfium/lib/libpdfium.so /usr/lib/ && ldconfig
 RUN cargo build --release
+
+FROM base AS poppler-build
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    curl \
+    pkg-config \
+    libboost-dev \
+    libfontconfig1-dev \
+    libfreetype6-dev \
+    libjpeg-dev \
+    liblcms2-dev \
+    libopenjp2-7-dev \
+    libpng-dev \
+    libtiff-dev \
+    zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+RUN curl -L -o poppler.tar.xz \
+    "https://poppler.freedesktop.org/poppler-26.07.0.tar.xz" \
+    && tar -xf poppler.tar.xz \
+    && rm poppler.tar.xz
+
+WORKDIR /build/poppler-26.07.0
+RUN cmake -S . -B build \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_SHARED_LIBS=OFF \
+    -DBUILD_GTK_TESTS=OFF \
+    -DBUILD_QT5_TESTS=OFF \
+    -DBUILD_QT6_TESTS=OFF \
+    -DBUILD_CPP_TESTS=OFF \
+    -DBUILD_MANUAL_TESTS=OFF \
+    -DENABLE_CPP=OFF \
+    -DENABLE_GLIB=OFF \
+    -DENABLE_QT5=OFF \
+    -DENABLE_QT6=OFF \
+    -DENABLE_LIBCURL=OFF \
+    -DENABLE_NSS3=OFF \
+    -DENABLE_GPGME=OFF \
+    && cmake --build build --target pdftoppm -j$(nproc)
 
 FROM base AS mupdf-build
 
@@ -46,11 +90,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /build
 RUN curl -L -o mupdf.tar.gz \
-    "https://mupdf.com/downloads/archive/mupdf-1.26.3-source.tar.gz" \
+    "https://mupdf.com/downloads/archive/mupdf-1.28.0-source.tar.gz" \
     && tar -xzf mupdf.tar.gz \
     && rm mupdf.tar.gz
 
-WORKDIR /build/mupdf-1.26.3-source
+WORKDIR /build/mupdf-1.28.0-source
 RUN make HAVE_X11=no HAVE_GLUT=no -j$(nproc)
 
 FROM base AS ghostscript-build
@@ -66,14 +110,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /build
 RUN curl -L -o gs.tar.gz \
-    "https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs10060/ghostscript-10.06.0.tar.gz" \
+    "https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs10071/ghostscript-10.07.1.tar.gz" \
     && tar -xzf gs.tar.gz \
     && rm gs.tar.gz
 
-WORKDIR /build/ghostscript-10.06.0
+WORKDIR /build/ghostscript-10.07.1
 RUN ./configure && make -j$(nproc)
 
-FROM node:20-bookworm-slim AS pdfjs
+FROM node:24-bookworm-slim AS pdfjs
 
 WORKDIR /opt/pdfjs
 COPY src/pdfjs/package.json src/pdfjs/package-lock.json* ./
@@ -85,13 +129,13 @@ FROM base AS pdfbox-download
 RUN apt-get update && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
 RUN curl -L -o /tmp/pdfbox.jar \
-    "https://archive.apache.org/dist/pdfbox/3.0.6/pdfbox-app-3.0.6.jar" && \
+    "https://dlcdn.apache.org/pdfbox/3.0.8/pdfbox-app-3.0.8.jar" && \
     curl -L -o /tmp/jai-imageio-core.jar \
     "https://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-core/1.4.0/jai-imageio-core-1.4.0.jar" && \
     curl -L -o /tmp/jai-imageio-jpeg2000.jar \
     "https://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-jpeg2000/1.4.0/jai-imageio-jpeg2000-1.4.0.jar"
 
-FROM ubuntu:24.04 AS lagom-build
+FROM ubuntu:26.04 AS lagom-build
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
@@ -109,7 +153,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
-RUN git clone --depth 1 https://github.com/LaurenzV/serenity.git
+RUN git init serenity \
+    && cd serenity \
+    && git remote add origin https://github.com/SerenityOS/serenity.git \
+    && git fetch --depth 1 origin e22c1f2df8bdf7dc3ff6f39460d72aaf0c8bbaa5 \
+    && git checkout --detach FETCH_HEAD
+
+COPY docker/serenity-scale.patch /tmp/serenity-scale.patch
+RUN cd serenity && git apply /tmp/serenity-scale.patch
 
 WORKDIR /build/serenity/Build/lagom
 RUN cmake -GNinja -S /build/serenity/Meta/Lagom -B . \
@@ -125,19 +176,20 @@ RUN ninja pdf
 FROM base AS final
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    openjdk-17-jre-headless \
+    default-jre-headless \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=node:20-bookworm-slim /usr/local/bin/node /usr/local/bin/node
+COPY --from=node:24-bookworm-slim /usr/local/bin/node /usr/local/bin/node
 
 RUN mkdir -p /opt/bin
 
 COPY --from=pdfium /build/pdfium/target/release/pdfium /opt/bin/pdfium
 COPY --from=pdfium /usr/lib/libpdfium.so /usr/lib/libpdfium.so
-COPY --from=mupdf-build /build/mupdf-1.26.3-source/build/release/mutool /opt/bin/mutool
-COPY --from=ghostscript-build /build/ghostscript-10.06.0/bin/gs /opt/bin/gs
-COPY --from=ghostscript-build /build/ghostscript-10.06.0/Resource /opt/ghostscript/Resource
-COPY --from=ghostscript-build /build/ghostscript-10.06.0/iccprofiles /opt/ghostscript/iccprofiles
+COPY --from=poppler-build /build/poppler-26.07.0/build/utils/pdftoppm /opt/bin/pdftoppm
+COPY --from=mupdf-build /build/mupdf-1.28.0-source/build/release/mutool /opt/bin/mutool
+COPY --from=ghostscript-build /build/ghostscript-10.07.1/bin/gs /opt/bin/gs
+COPY --from=ghostscript-build /build/ghostscript-10.07.1/Resource /opt/ghostscript/Resource
+COPY --from=ghostscript-build /build/ghostscript-10.07.1/iccprofiles /opt/ghostscript/iccprofiles
 COPY --from=pdfjs /opt/pdfjs /opt/pdfjs
 COPY --from=pdfbox-download /tmp/pdfbox.jar /opt/pdfbox/pdfbox.jar
 COPY --from=pdfbox-download /tmp/jai-imageio-core.jar /opt/pdfbox/jai-imageio-core.jar

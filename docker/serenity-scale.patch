@@ -1,0 +1,56 @@
+diff --git a/Userland/Utilities/pdf.cpp b/Userland/Utilities/pdf.cpp
+index 294aff3d4ae545..7b08d75436fc05 100644
+--- a/Userland/Utilities/pdf.cpp
++++ b/Userland/Utilities/pdf.cpp
+@@ -55,12 +55,13 @@ static PDF::PDFErrorOr<void> print_document_info(PDF::Document& document, bool j
+     return {};
+ }
+ 
+-static PDF::PDFErrorOr<NonnullRefPtr<Gfx::Bitmap>> render_page(PDF::Document& document, PDF::Page const& page)
++static PDF::PDFErrorOr<NonnullRefPtr<Gfx::Bitmap>> render_page(PDF::Document& document, PDF::Page const& page, double scale)
+ {
+-    int const size = 800;
+-    auto page_size = Gfx::IntSize { size, round_to<int>(size * page.media_box.height() / page.media_box.width()) };
++    auto width = page.media_box.width() * scale;
++    auto height = page.media_box.height() * scale;
++    auto page_size = Gfx::IntSize { round_to<int>(width), round_to<int>(height) };
+     if (int rotation_count = (page.rotate / 90) % 4; rotation_count % 2 == 1)
+-        page_size = Gfx::IntSize { round_to<int>(size * page.media_box.width() / page.media_box.height()), size };
++        page_size = Gfx::IntSize { round_to<int>(height), round_to<int>(width) };
+ 
+     auto bitmap = TRY(Gfx::Bitmap::create(Gfx::BitmapFormat::BGRx8888, page_size));
+ 
+@@ -72,11 +73,11 @@ static PDF::PDFErrorOr<NonnullRefPtr<Gfx::Bitmap>> render_page(PDF::Document& do
+     return TRY(PDF::Renderer::apply_page_rotation(bitmap, page));
+ }
+ 
+-static PDF::PDFErrorOr<NonnullRefPtr<Gfx::Bitmap>> render_page_to_memory(PDF::Document& document, PDF::Page const& page, int repeats)
++static PDF::PDFErrorOr<NonnullRefPtr<Gfx::Bitmap>> render_page_to_memory(PDF::Document& document, PDF::Page const& page, double scale, int repeats)
+ {
+-    auto bitmap = TRY(render_page(document, page));
++    auto bitmap = TRY(render_page(document, page, scale));
+     for (int i = 0; i < repeats - 1; ++i)
+-        (void)TRY(render_page(document, page));
++        (void)TRY(render_page(document, page, scale));
+     return bitmap;
+ }
+ 
+@@ -217,6 +218,9 @@ static PDF::PDFErrorOr<int> pdf_main(Main::Arguments arguments)
+     u32 render_repeats = 1;
+     args_parser.add_option(render_repeats, "Number of times to render page (for profiling)", "render-repeats", {}, "N");
+ 
++    double scale = 1.0;
++    args_parser.add_option(scale, "Scale factor for rendering (default: 1.0)", "scale", {}, "SCALE");
++
+     args_parser.parse(arguments);
+ 
+     auto file = TRY(Core::MappedFile::map(in_path));
+@@ -270,7 +274,7 @@ static PDF::PDFErrorOr<int> pdf_main(Main::Arguments arguments)
+ 
+     if (!render_path.is_empty() || render_bench) {
+         auto page = TRY(document->get_page(page_index));
+-        auto bitmap = TRY(render_page_to_memory(document, page, render_repeats));
++        auto bitmap = TRY(render_page_to_memory(document, page, scale, render_repeats));
+         if (!render_path.is_empty())
+             TRY(save_rendered_page(move(bitmap), render_path));
+         return 0;
