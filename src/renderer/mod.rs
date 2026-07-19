@@ -1,7 +1,13 @@
 #[cfg(feature = "hayro")]
+use hayro::hayro_interpret::InterpreterSettings;
+#[cfg(feature = "hayro")]
+use hayro::hayro_syntax::Pdf;
+#[cfg(feature = "hayro")]
 use hayro::vello_cpu::color::AlphaColor;
 #[cfg(feature = "hayro")]
-use hayro::{RenderSettings};
+use hayro::RenderCache;
+#[cfg(feature = "hayro")]
+use hayro::RenderSettings;
 use std::cmp::min;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
@@ -9,12 +15,10 @@ use std::process::{Child, Command, Stdio};
 use std::sync::Arc;
 use std::sync::LazyLock;
 use std::{env, fs};
-#[cfg(feature = "hayro")]
-use hayro::hayro_interpret::InterpreterSettings;
-#[cfg(feature = "hayro")]
-use hayro::hayro_syntax::Pdf;
-#[cfg(feature = "hayro")]
-use hayro::RenderCache;
+use std::{
+    thread,
+    time::{Duration, Instant},
+};
 use tempdir::TempDir;
 use tiny_skia::{Paint, PathBuilder, Pixmap, PixmapPaint, Stroke, Transform};
 
@@ -22,9 +26,11 @@ use tiny_skia::{Paint, PathBuilder, Pixmap, PixmapPaint, Stroke, Transform};
 mod quartz;
 
 const DOCKER_IMAGE: &str = "vallaris/sitro-backends:latest";
+const DOCKER_START_TIMEOUT: Duration = Duration::from_secs(10);
+const DOCKER_POLL_INTERVAL: Duration = Duration::from_millis(100);
 
 /// The global render instance.
-pub static RENDER_INSTANCE: LazyLock<Option<Renderer>> = LazyLock::new(|| Renderer::new().ok());
+pub static RENDER_INSTANCE: LazyLock<Result<Renderer, String>> = LazyLock::new(|| Renderer::new());
 
 /// The renderer used to render PDFs with different backends.
 pub struct Renderer {
@@ -42,7 +48,7 @@ impl Renderer {
 
         // Start container attached to stdin - when our process dies, stdin closes,
         // cat exits, and --rm cleans up the container
-        let child = Command::new("docker")
+        let mut child = Command::new("docker")
             .args(["run", "--rm", "-i", "--entrypoint", "cat", "-v"])
             .arg(format!("{}:/work", work_dir.path().to_string_lossy()))
             .arg(&docker_image)
@@ -53,6 +59,7 @@ impl Renderer {
             .map_err(|e| format!("failed to start docker: {e}"))?;
 
         // Poll until the container is running
+        let start = Instant::now();
         let container_id = loop {
             let output = Command::new("docker")
                 .args([
@@ -65,10 +72,42 @@ impl Renderer {
                 .output()
                 .map_err(|e| format!("failed to get container id: {e}"))?;
 
+            if !output.status.success() {
+                let error = String::from_utf8_lossy(&output.stderr);
+                let error = error.trim();
+                let _ = child.kill();
+                let _ = child.wait();
+                return Err(if error.is_empty() {
+                    format!("failed to query Docker: {}", output.status)
+                } else {
+                    format!("failed to query Docker: {error}")
+                });
+            }
+
             let id = String::from_utf8_lossy(&output.stdout).trim().to_string();
             if !id.is_empty() {
                 break id;
             }
+
+            if let Some(status) = child
+                .try_wait()
+                .map_err(|e| format!("failed to check Docker container process: {e}"))?
+            {
+                return Err(format!(
+                    "Docker container exited before it started: {status}"
+                ));
+            }
+
+            if start.elapsed() >= DOCKER_START_TIMEOUT {
+                let _ = child.kill();
+                let _ = child.wait();
+                return Err(format!(
+                    "timed out waiting for Docker container after {} seconds",
+                    DOCKER_START_TIMEOUT.as_secs()
+                ));
+            }
+
+            thread::sleep(DOCKER_POLL_INTERVAL);
         };
 
         Ok(Self {
