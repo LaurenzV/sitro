@@ -27,7 +27,8 @@ fn main() -> Result<(), String> {
         let image = page
             .render_with_config(&PdfRenderConfig::new().scale_page_by_factor(scale))
             .map_err(|_| "unable to render pdf document")?
-            .as_image();
+            .as_image()
+            .map_err(|_| "unable to render pdf document")?;
         image
             .write_to(&mut output_buffer, ImageFormat::Png)
             .map_err(|_| "unable to render pdf document")?;
