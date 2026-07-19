@@ -1,3 +1,5 @@
+ARG BUILD_JOBS=2
+
 FROM ubuntu:26.04 AS base
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -12,11 +14,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     poppler-data \
     && rm -rf /var/lib/apt/lists/*
 
-FROM rust:latest AS rust-build
+FROM --platform=$BUILDPLATFORM ubuntu:26.04 AS source-download-base
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
     curl \
+    xz-utils \
     && rm -rf /var/lib/apt/lists/*
+
+FROM source-download-base AS pdfium-source
 
 ARG TARGETARCH
 RUN PDFIUM_ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "arm64" || echo "x64") && \
@@ -26,21 +32,34 @@ RUN PDFIUM_ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "arm64" || echo "x64") && 
     tar -xzf /tmp/pdfium.tgz -C /opt/pdfium && \
     rm /tmp/pdfium.tgz
 
+FROM rust:latest AS rust-build
+
+COPY --from=pdfium-source /opt/pdfium /opt/pdfium
+
 FROM rust-build AS pdfium
 
+ARG BUILD_JOBS
 WORKDIR /build/pdfium
 COPY src/pdfium/Cargo.toml src/pdfium/Cargo.lock* ./
 COPY src/pdfium/src ./src
 
 RUN cp /opt/pdfium/lib/libpdfium.so /usr/lib/ && ldconfig
-RUN cargo build --release
+RUN cargo build --release -j "$BUILD_JOBS"
+
+FROM source-download-base AS poppler-source
+
+WORKDIR /build
+RUN curl -L -o poppler.tar.xz \
+    "https://poppler.freedesktop.org/poppler-26.07.0.tar.xz" \
+    && tar -xf poppler.tar.xz \
+    && rm poppler.tar.xz
 
 FROM base AS poppler-build
 
+ARG BUILD_JOBS
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     cmake \
-    curl \
     pkg-config \
     libboost-dev \
     libfontconfig1-dev \
@@ -53,11 +72,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /build
-RUN curl -L -o poppler.tar.xz \
-    "https://poppler.freedesktop.org/poppler-26.07.0.tar.xz" \
-    && tar -xf poppler.tar.xz \
-    && rm poppler.tar.xz
+COPY --from=poppler-source /build/poppler-26.07.0 /build/poppler-26.07.0
 
 WORKDIR /build/poppler-26.07.0
 RUN cmake -S . -B build \
@@ -75,18 +90,9 @@ RUN cmake -S . -B build \
     -DENABLE_LIBCURL=OFF \
     -DENABLE_NSS3=OFF \
     -DENABLE_GPGME=OFF \
-    && cmake --build build --target pdftoppm -j$(nproc)
+    && cmake --build build --target pdftoppm -j"$BUILD_JOBS"
 
-FROM base AS mupdf-build
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    curl \
-    libfreetype6-dev \
-    libjpeg-dev \
-    libharfbuzz-dev \
-    zlib1g-dev \
-    && rm -rf /var/lib/apt/lists/*
+FROM source-download-base AS mupdf-source
 
 WORKDIR /build
 RUN curl -L -o mupdf.tar.gz \
@@ -94,15 +100,23 @@ RUN curl -L -o mupdf.tar.gz \
     && tar -xzf mupdf.tar.gz \
     && rm mupdf.tar.gz
 
-WORKDIR /build/mupdf-1.28.0-source
-RUN make HAVE_X11=no HAVE_GLUT=no -j$(nproc)
+FROM base AS mupdf-build
 
-FROM --platform=$BUILDPLATFORM ubuntu:26.04 AS ghostscript-source
-
+ARG BUILD_JOBS
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    curl \
+    build-essential \
+    libfreetype6-dev \
+    libjpeg-dev \
+    libharfbuzz-dev \
+    zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
+
+COPY --from=mupdf-source /build/mupdf-1.28.0-source /build/mupdf-1.28.0-source
+
+WORKDIR /build/mupdf-1.28.0-source
+RUN make HAVE_X11=no HAVE_GLUT=no -j"$BUILD_JOBS"
+
+FROM source-download-base AS ghostscript-source
 
 WORKDIR /build
 RUN curl -L -o gs.tar.gz \
@@ -112,6 +126,7 @@ RUN curl -L -o gs.tar.gz \
 
 FROM base AS ghostscript-build
 
+ARG BUILD_JOBS
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libfreetype6-dev \
@@ -123,7 +138,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=ghostscript-source /build/ghostscript-10.07.1 /build/ghostscript-10.07.1
 
 WORKDIR /build/ghostscript-10.07.1
-RUN ./configure && make -j$(nproc)
+RUN ./configure && make -j"$BUILD_JOBS"
 
 FROM node:24-bookworm-slim AS pdfjs
 
@@ -145,6 +160,7 @@ RUN curl -L -o /tmp/pdfbox.jar \
 
 FROM ubuntu:26.04 AS lagom-build
 
+ARG BUILD_JOBS
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     cmake \
@@ -179,7 +195,7 @@ RUN cmake -GNinja -S /build/serenity/Meta/Lagom -B . \
     -DBUILD_SHARED_LIBS=OFF \
     -DENABLE_LAGOM_LIBWEB=OFF \
     -DENABLE_LAGOM_LADYBIRD=OFF
-RUN ninja pdf
+RUN ninja -j "$BUILD_JOBS" pdf
 
 FROM base AS final
 
