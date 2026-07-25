@@ -43,8 +43,5 @@ jobs:
       - name: Check (no default features)
         run: cargo check --no-default-features
 
-      - name: Pull Docker image
-        run: docker pull vallaris/sitro-backends:latest
-
       - name: Run tests
         run: cargo test

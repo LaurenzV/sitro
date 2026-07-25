@@ -1,7 +1,7 @@
 workspace = { members = ["src/pdfium"] }
 [package]
 name = "sitro"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -15,7 +15,7 @@ image = {version = "0.24.7", features = ["png"]}
 imagesize = "0.12.0"
 rayon = "1.8.1"
 regex = "1.10.2"
-tempdir = "0.3.7"
+tempfile = "3"
 tiny-skia = "0.11.4"
 uuid = { version = "1", features = ["v4"] }
 walkdir = "2.4.0"

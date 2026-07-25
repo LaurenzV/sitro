@@ -17,11 +17,7 @@ Render PDFs with multiple backends to compare output across different PDF engine
 
 # Setup
 
-Docker must be installed and running. Sitro automatically uses the Docker image tagged with the same version as the crate and pulls it when it is not available locally:
-
-```text
-vallaris/sitro-backends:<crate-version>
-```
+Docker must be installed and running. Sitro automatically uses the Docker image pinned to this crate version by its multi-platform manifest digest and pulls it when it is not available locally.
 
 Set `SITRO_DOCKER_IMAGE` to override the image. The Quartz and Hayro backends run natively with no additional setup.
 */
