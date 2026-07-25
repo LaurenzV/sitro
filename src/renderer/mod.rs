@@ -19,13 +19,13 @@ use std::{
     thread,
     time::{Duration, Instant},
 };
-use tempdir::TempDir;
+use tempfile::{Builder, TempDir};
 use tiny_skia::{Paint, PathBuilder, Pixmap, PixmapPaint, Stroke, Transform};
 
 #[cfg(target_os = "macos")]
 mod quartz;
 
-const DOCKER_IMAGE: &str = concat!("vallaris/sitro-backends:", env!("CARGO_PKG_VERSION"));
+const DOCKER_IMAGE: &str = include_str!("../../docker/backend-image.lock");
 const DOCKER_START_TIMEOUT: Duration = Duration::from_secs(10);
 const DOCKER_POLL_INTERVAL: Duration = Duration::from_millis(100);
 
@@ -43,9 +43,12 @@ pub struct Renderer {
 impl Renderer {
     fn new() -> Result<Self, String> {
         let docker_image =
-            env::var("SITRO_DOCKER_IMAGE").unwrap_or_else(|_| DOCKER_IMAGE.to_string());
+            env::var("SITRO_DOCKER_IMAGE").unwrap_or_else(|_| DOCKER_IMAGE.trim().to_string());
         ensure_docker_image(&docker_image)?;
-        let work_dir = TempDir::new("sitro").map_err(|e| e.to_string())?;
+        let work_dir = Builder::new()
+            .prefix("sitro")
+            .tempdir()
+            .map_err(|e| e.to_string())?;
 
         // Start container attached to stdin - when our process dies, stdin closes,
         // cat exits, and --rm cleans up the container

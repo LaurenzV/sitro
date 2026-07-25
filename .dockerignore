@@ -1,7 +1,10 @@
 target/
 .git/
 .idea/
+.claude/
 test/
 pdf/
+out/
+src/pdfjs/node_modules/
 *.pdf
 .DS_Store
