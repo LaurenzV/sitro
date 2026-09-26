@@ -367,8 +367,6 @@ fn render_hayro(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocument,
     let render_settings = RenderSettings {
         x_scale: options.scale,
         y_scale: options.scale,
-        width: None,
-        height: None,
         bg_color: AlphaColor::WHITE,
     };
     let cache = RenderCache::new();
