@@ -45,7 +45,6 @@ extern "C" {
     fn CGPDFPageGetBoxRect(page: CGPDFPageRef, box_type: CGPDFBox) -> CGRect;
     fn CGPDFPageGetRotationAngle(page: CGPDFPageRef) -> i32;
     fn CGContextDrawPDFPage(context: *mut c_void, page: CGPDFPageRef);
-    fn CGContextSetInterpolationQuality(context: *mut c_void, quality: i32);
 }
 
 #[link(name = "CoreFoundation", kind = "framework")]
@@ -71,8 +70,6 @@ extern "C" {
     );
     fn CGImageDestinationFinalize(dest: *mut c_void) -> bool;
 }
-
-const K_CG_INTERPOLATION_HIGH: i32 = 3;
 
 pub fn render(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocument, String> {
     let scale = options.scale;
@@ -145,10 +142,6 @@ fn render_page(page: CGPDFPageRef, scale: f32) -> Result<RenderedPage, String> {
         &CGPoint::new(0.0, 0.0),
         &CGSize::new(scaled_width as f64, scaled_height as f64),
     ));
-
-    unsafe {
-        CGContextSetInterpolationQuality(context.as_ptr() as *mut c_void, K_CG_INTERPOLATION_HIGH);
-    }
 
     context.scale(scale as f64, scale as f64);
 
