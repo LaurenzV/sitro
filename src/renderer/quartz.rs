@@ -6,46 +6,19 @@ use core_foundation::string::CFString;
 use core_graphics::base::kCGBitmapByteOrderDefault;
 use core_graphics::color_space::CGColorSpace;
 use core_graphics::context::CGContext;
-use core_graphics::data_provider::CGDataProvider;
 use core_graphics::geometry::{CGPoint, CGRect, CGSize};
 use core_graphics::image::CGImageAlphaInfo;
 use foreign_types::ForeignType;
+use objc2::{rc::autoreleasepool, AnyThread};
+use objc2_core_graphics::CGContext as ObjcCGContext;
+use objc2_foundation::NSData;
+use objc2_pdf_kit::{PDFDisplayBox, PDFDocument, PDFPage};
 use std::ffi::c_void;
 use std::ptr;
-use std::sync::Arc;
-
-#[repr(C)]
-struct CGPDFDocument(c_void);
-type CGPDFDocumentRef = *const CGPDFDocument;
-
-#[repr(C)]
-struct CGPDFPage(c_void);
-type CGPDFPageRef = *const CGPDFPage;
-
-#[repr(i32)]
-#[allow(dead_code)]
-enum CGPDFBox {
-    MediaBox = 0,
-    CropBox = 1,
-    BleedBox = 2,
-    TrimBox = 3,
-    ArtBox = 4,
-}
 
 #[repr(C)]
 struct __CFMutableData(c_void);
 type CFMutableDataRef = *mut __CFMutableData;
-
-#[link(name = "CoreGraphics", kind = "framework")]
-extern "C" {
-    fn CGPDFDocumentCreateWithProvider(provider: *const c_void) -> CGPDFDocumentRef;
-    fn CGPDFDocumentRelease(document: CGPDFDocumentRef);
-    fn CGPDFDocumentGetNumberOfPages(document: CGPDFDocumentRef) -> usize;
-    fn CGPDFDocumentGetPage(document: CGPDFDocumentRef, page_number: usize) -> CGPDFPageRef;
-    fn CGPDFPageGetBoxRect(page: CGPDFPageRef, box_type: CGPDFBox) -> CGRect;
-    fn CGPDFPageGetRotationAngle(page: CGPDFPageRef) -> i32;
-    fn CGContextDrawPDFPage(context: *mut c_void, page: CGPDFPageRef);
-}
 
 #[link(name = "CoreFoundation", kind = "framework")]
 extern "C" {
@@ -72,44 +45,26 @@ extern "C" {
 }
 
 pub fn render(buf: &[u8], options: &RenderOptions) -> Result<RenderedDocument, String> {
-    let scale = options.scale;
+    autoreleasepool(|_| {
+        let data = unsafe { NSData::dataWithBytes_length(buf.as_ptr().cast(), buf.len()) };
+        let document = unsafe { PDFDocument::initWithData(PDFDocument::alloc(), &data) }
+            .ok_or_else(|| "Failed to create PDF document".to_string())?;
+        let page_count = unsafe { document.pageCount() };
+        let mut pages: Vec<RenderedPage> = Vec::with_capacity(page_count);
 
-    let buffer = Arc::new(buf.to_vec());
-    let provider = CGDataProvider::from_buffer(buffer);
-
-    let document = unsafe { CGPDFDocumentCreateWithProvider(provider.as_ptr() as *const c_void) };
-    if document.is_null() {
-        return Err("Failed to create PDF document".to_string());
-    }
-
-    let page_count = unsafe { CGPDFDocumentGetNumberOfPages(document) };
-    let mut pages: Vec<RenderedPage> = Vec::with_capacity(page_count);
-
-    for page_num in 1..=page_count {
-        let page = unsafe { CGPDFDocumentGetPage(document, page_num) };
-        if page.is_null() {
-            unsafe { CGPDFDocumentRelease(document) };
-            return Err(format!("Failed to get page {}", page_num));
+        for page_num in 0..page_count {
+            let page = unsafe { document.pageAtIndex(page_num) }
+                .ok_or_else(|| format!("Failed to get page {}", page_num + 1))?;
+            pages.push(render_page(&page, options.scale)?);
         }
 
-        match render_page(page, scale) {
-            Ok(png_data) => pages.push(png_data),
-            Err(e) => {
-                unsafe { CGPDFDocumentRelease(document) };
-                return Err(e);
-            }
-        }
-    }
-
-    unsafe { CGPDFDocumentRelease(document) };
-
-    Ok(pages)
+        Ok(pages)
+    })
 }
 
-fn render_page(page: CGPDFPageRef, scale: f32) -> Result<RenderedPage, String> {
-    let crop_box = unsafe { CGPDFPageGetBoxRect(page, CGPDFBox::CropBox) };
-    let rotation = unsafe { CGPDFPageGetRotationAngle(page) };
-
+fn render_page(page: &PDFPage, scale: f32) -> Result<RenderedPage, String> {
+    let crop_box = unsafe { page.boundsForBox(PDFDisplayBox::CropBox) };
+    let rotation = unsafe { page.rotation() };
     let (width, height) =
         if rotation == 90 || rotation == 270 || rotation == -90 || rotation == -270 {
             (crop_box.size.height, crop_box.size.width)
@@ -145,26 +100,13 @@ fn render_page(page: CGPDFPageRef, scale: f32) -> Result<RenderedPage, String> {
 
     context.scale(scale as f64, scale as f64);
 
-    match rotation {
-        90 | -270 => {
-            context.translate(height, 0.0);
-            context.rotate(std::f64::consts::FRAC_PI_2);
-        }
-        180 | -180 => {
-            context.translate(width, height);
-            context.rotate(std::f64::consts::PI);
-        }
-        270 | -90 => {
-            context.translate(0.0, width);
-            context.rotate(-std::f64::consts::FRAC_PI_2);
-        }
-        _ => {}
-    }
-
-    context.translate(-crop_box.origin.x, -crop_box.origin.y);
-
+    // PDFKit draws annotations, which CGContextDrawPDFPage omits.
     unsafe {
-        CGContextDrawPDFPage(context.as_ptr() as *mut c_void, page);
+        page.setDisplaysAnnotations(true);
+        page.drawWithBox_toContext(
+            PDFDisplayBox::CropBox,
+            &*(context.as_ptr() as *const ObjcCGContext),
+        );
     }
 
     let image = context

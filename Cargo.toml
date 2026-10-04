@@ -25,3 +25,7 @@ hayro = { git = "https://github.com/LaurenzV/hayro.git", rev = "c9d699db74348be4
 core-graphics = "0.24"
 core-foundation = "0.10"
 foreign-types = "0.5"
+objc2 = "0.6"
+objc2-core-graphics = { version = "0.3.2", default-features = false, features = ["CGContext"] }
+objc2-foundation = { version = "0.3.2", default-features = false, features = ["NSData"] }
+objc2-pdf-kit = { version = "0.3.2", default-features = false, features = ["PDFDocument", "PDFPage", "objc2-core-graphics"] }
