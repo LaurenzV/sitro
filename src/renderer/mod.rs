@@ -54,7 +54,7 @@ impl Renderer {
         // cat exits, and --rm cleans up the container
         let mut child = Command::new("docker")
             .args(["run", "--rm", "-i", "--entrypoint", "cat", "-v"])
-            .arg(format!("{}:/work", work_dir.path().to_string_lossy()))
+            .arg(format!("{}:/work:z", work_dir.path().to_string_lossy()))
             .arg(&docker_image)
             .stdin(Stdio::piped())
             .stdout(Stdio::null())
